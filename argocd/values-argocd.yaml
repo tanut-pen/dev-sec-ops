@@ -1,0 +1,10 @@
+configs:
+  params:
+    server.insecure: true
+
+server:
+  service:
+    type: NodePort
+    nodePortHttp: 30004
+  ingress:
+    enabled: false
