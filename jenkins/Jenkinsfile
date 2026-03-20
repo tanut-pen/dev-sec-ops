@@ -31,21 +31,21 @@ pipeline {
       kind: Pod
       spec:
         containers:
-        # 1. Container สำหรับ Node.js (ใช้รัน npm install / test)
+        # Node.js container for npm install and tests
         - name: nodejs
           image: node:20-bullseye-slim
           command:
           - cat
           tty: true
         
-        # 2. Container สำหรับ Sonar Scanner
+        # Sonar Scanner container
         - name: sonar
           image: sonarsource/sonar-scanner-cli:latest
           command:
           - cat
           tty: true
 
-        # 3. Container สำหรับ Docker CLI
+        # Docker CLI container
         - name: docker-cli
           image: docker:cli
           command:
@@ -55,7 +55,7 @@ pipeline {
           - mountPath: /var/run/docker.sock
             name: docker-sock
         
-        # 4. Container สำหรับ Trivy Scan
+        # Trivy scan container
         - name: trivy
           image: aquasec/trivy:latest
           command:
@@ -65,7 +65,7 @@ pipeline {
           - mountPath: /var/run/docker.sock 
             name: docker-sock
         
-        # 5. Container สำหรับยิง API
+        # Container for API requests
         - name: curl
           image: curlimages/curl:latest
           command:
@@ -95,7 +95,7 @@ pipeline {
 
     APP_NAME = 'getting-started-todo-app'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
-    REGISTRY_URL = '10.72.110.5:30002'
+    REGISTRY_URL = 'localhost:30002'
     REGISTRY_PROJECT = 'my-project'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
@@ -104,7 +104,7 @@ pipeline {
     SONAR_PROJECT_NAME = 'docker-getting-started-todo-app'
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
-    DEFECTDOJO_URL = 'http://10.72.110.5:31259'
+    DEFECTDOJO_URL = 'http://localhost:30001'
     DEFECTDOJO_ENGAGEMENT_ID = '1'
     DEFECTDOJO_PRODUCT_NAME = 'getting-started-todo-app'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
@@ -120,7 +120,7 @@ pipeline {
 
     stage('Install Dependencies') {
       steps {
-        // ใช้ container nodejs ในการรัน (ไม่ต้อง apt-get แล้ว)
+        // Run dependency installation in the nodejs container.
         container('nodejs') {
           script {
             installNodeDeps('client')
@@ -144,17 +144,17 @@ pipeline {
     
     stage('SonarQube Analysis') {
       steps {
-        // ย้ายมาใช้ container 'nodejs' ที่มี Node.js ARM64 แท้ๆ ติดตั้งอยู่
+        // Use the nodejs container so scanner installation and Node runtime match.
         container('nodejs') {
           withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
             sh """
-              # 1. ติดตั้ง sonar-scanner ผ่าน npm (เพื่อความชัวร์ว่าจะใช้ตัวที่รองรับ ARM)
+              # Install sonar-scanner through npm.
               npm install -g sonarqube-scanner
 
-              # 2. หา Path ของ Node.js ในเครื่อง
+              # Detect the Node.js executable path.
               NODE_EXEC=\$(which node)
               
-              # 3. รันสแกน โดยบอกให้ใช้ Node.js ตัวที่เราเพิ่งหาเจอ
+              # Run the scan with the detected Node.js binary.
               sonar-scanner \
                 -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
                 -Dsonar.login=\${SONAR_TOKEN} \
@@ -182,7 +182,7 @@ pipeline {
     stage('Build Container Image') {
       steps {
         container('docker-cli') {
-          // สังเกตการใช้ Double Quotes ("") เพื่อให้มันแทนค่าตัวแปรได้
+          // Use double quotes so Groovy expands the variable.
           sh "docker build -t ${IMAGE_NAME} ."
         }
       }

@@ -10,6 +10,7 @@ The stack in this repo includes:
 - `SonarQube` for static code analysis
 - `Harbor` for container image storage
 - `DefectDojo` for vulnerability report import and tracking
+- `Argo CD` for GitOps-style delivery
 - `Trivy` for container image scanning
 
 ## Project Structure
@@ -91,6 +92,7 @@ This adds the Helm repositories for:
 - SonarQube
 - Harbor
 - Jenkins
+- Argo CD
 
 ### 3. Install Jenkins
 
@@ -159,6 +161,24 @@ Current DefectDojo settings from `DefectDojo/values-dojo.yaml`:
 - PostgreSQL persistence enabled
 - Valkey persistence enabled
 
+### 7. Install Argo CD
+
+Run:
+
+```bash
+cd argocd
+./install.sh
+```
+
+Current Argo CD settings from `argocd/values-argocd.yaml`:
+
+- Namespace: `argocd`
+- Service type: `NodePort`
+- HTTP NodePort: `30004`
+- Chart ingress disabled
+- Server runs in insecure mode for local ingress compatibility
+- The same install script also installs Argo Rollouts in namespace `argo-rollouts`
+
 ## Accessing Services
 
 Based on the current configuration, the main local access points are:
@@ -166,11 +186,13 @@ Based on the current configuration, the main local access points are:
 - Jenkins: `http://localhost:30003`
 - Harbor: `http://localhost:30002`
 - DefectDojo: `http://localhost:30001`
+- Argo CD: `http://localhost:30004`
 
 There is also an ingress manifest at `ingress.yaml` that defines:
 
 - `jenkins.local`
 - `sonarqube.local`
+- `argocd.local`
 
 Note: this will only work if your cluster has an Ingress controller installed and your local DNS or `/etc/hosts` is configured accordingly. The current `k3d/start.sh` script does not install an Ingress controller.
 

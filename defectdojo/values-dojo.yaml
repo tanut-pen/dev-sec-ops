@@ -23,5 +23,5 @@ extraConfigs:
 django:
   service:
     type: NodePort
-    port: 8080        # พอร์ตภายใน
+    port: 8080
     nodePort: 30001
