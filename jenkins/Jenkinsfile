@@ -95,7 +95,7 @@ pipeline {
 
     APP_NAME = 'getting-started-todo-app'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
-    REGISTRY_URL = 'localhost:30002'
+    REGISTRY_URL = 'harbor.local:30002'
     REGISTRY_PROJECT = 'my-project'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
@@ -104,7 +104,7 @@ pipeline {
     SONAR_PROJECT_NAME = 'docker-getting-started-todo-app'
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
-    DEFECTDOJO_URL = 'http://localhost:30001'
+    DEFECTDOJO_URL = 'http://defectdojo.local'
     DEFECTDOJO_ENGAGEMENT_ID = '1'
     DEFECTDOJO_PRODUCT_NAME = 'getting-started-todo-app'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
