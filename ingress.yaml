@@ -2,7 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: jenkins-ingress
-  namespace: jenkins 
+  namespace: jenkins
 spec:
   rules:
   - host: jenkins.local
@@ -49,5 +49,41 @@ spec:
         backend:
           service:
             name: argocd-server
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: harbor-ingress
+  namespace: harbor
+spec:
+  rules:
+  - host: harbor.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-portal
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: defectdojo-ingress
+  namespace: defectdojo
+spec:
+  rules:
+  - host: defectdojo.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: defectdojo-django
             port:
               number: 80
