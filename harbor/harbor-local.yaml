@@ -8,7 +8,7 @@ expose:
       http:
         nodePort: 30002
 
-externalURL: http://harbor.local
+externalURL: http://harbor.local:30002
 
 persistence:
   persistentVolumeClaim:
