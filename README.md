@@ -11,6 +11,7 @@ The stack in this repo includes:
 - `Harbor` for container image storage
 - `DefectDojo` for vulnerability report import and tracking
 - `Argo CD` for GitOps-style delivery
+- `Grafana Stack` for monitoring, dashboards, and alerting
 - `Trivy` for container image scanning
 
 ## Project Structure
@@ -31,14 +32,20 @@ The stack in this repo includes:
 ├── Habor/
 │   ├── install.sh
 │   └── harbor-local.yaml
-└── DefectDojo/
+├── DefectDojo/
+│   ├── install.sh
+│   └── values-dojo.yaml
+└── grafana/
     ├── install.sh
-    └── values-dojo.yaml
+    ├── readme.md
+    └── values-grafana.yaml
 ```
 
 ## What This Project Does
 
 This project is designed as a local DevSecOps lab. It creates a Kubernetes environment and installs the core tools needed to run a simple secure delivery pipeline.
+
+It also includes a monitoring stack so you can observe the health of the local platform with Grafana dashboards backed by Prometheus.
 
 The included Jenkins pipeline performs these steps:
 
@@ -93,6 +100,7 @@ This adds the Helm repositories for:
 - Harbor
 - Jenkins
 - Argo CD
+- Prometheus Community
 
 ### 3. Install Jenkins
 
@@ -179,6 +187,24 @@ Current Argo CD settings from `argocd/values-argocd.yaml`:
 - Server runs in insecure mode for local ingress compatibility
 - The same install script also installs Argo Rollouts in namespace `argo-rollouts`
 
+### 8. Install Grafana Stack
+
+Run:
+
+```bash
+cd grafana
+./install.sh
+```
+
+Current Grafana stack settings from `grafana/values-grafana.yaml`:
+
+- Namespace: `grafana`
+- Helm release: `grafana`
+- Chart: `prometheus-community/kube-prometheus-stack`
+- Grafana service type: `NodePort`
+- Grafana NodePort: `30005`
+- Prometheus retention: `7d`
+
 ## Accessing Services
 
 Based on the current configuration, the main local access points are:
@@ -187,12 +213,14 @@ Based on the current configuration, the main local access points are:
 - Harbor: `http://localhost:30002`
 - DefectDojo: `http://localhost:30001`
 - Argo CD: `http://localhost:30004`
+- Grafana: `http://localhost:30005`
 
 There is also an ingress manifest at `ingress.yaml` that defines:
 
 - `jenkins.local`
 - `sonarqube.local`
 - `argocd.local`
+- `grafana.local`
 
 Note: this will only work if your cluster has an Ingress controller installed and your local DNS or `/etc/hosts` is configured accordingly. The current `k3d/start.sh` script does not install an Ingress controller.
 

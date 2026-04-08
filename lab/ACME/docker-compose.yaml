@@ -1,0 +1,56 @@
+version: '3.8'
+
+services:
+  # 1. ACME Server: Pebble (simulates Let's Encrypt)
+  pebble:
+    image: letsencrypt/pebble:latest
+    command: pebble -config /test/config/pebble-config.json -strict=false
+    environment:
+      - PEBBLE_VA_NOSLEEP=1
+      - PEBBLE_WFE_NONCEREJECT=0
+    ports:
+      - "14000:14000"  # ACME API for Traefik to request certificates
+      - "15000:15000"  # Management API
+
+  # 2. ACME Client & Reverse Proxy: Traefik
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--log.level=DEBUG" # Enable DEBUG to inspect the ACME process in detail
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # ACME client configuration
+      - "--certificatesresolvers.myacme.acme.caserver=https://pebble:14000/dir"
+      - "--certificatesresolvers.myacme.acme.email=admin@demo.local"
+      - "--certificatesresolvers.myacme.acme.storage=/acme.json"
+      - "--certificatesresolvers.myacme.acme.httpchallenge=true"
+      - "--certificatesresolvers.myacme.acme.httpchallenge.entrypoint=web"
+    environment:
+      # Tell Traefik to trust Pebble's Root CA
+      - LEGO_CA_CERTIFICATES=/pebble-certs/pebble.minica.pem
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # Traefik Dashboard
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./acme.json:/acme.json"
+      - "./pebble.minica.pem:/pebble-certs/pebble.minica.pem:ro"
+    networks:
+      default:
+        aliases:
+          # Important tip: Fake DNS so Pebble recognizes the domain and sends HTTP challenge back to Traefik
+          - demo.local  
+
+  # 3. Web Service: Example application that will use HTTPS
+  whoami:
+    image: traefik/whoami
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`demo.local`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls=true"
+      - "traefik.http.routers.whoami.tls.certresolver=myacme" # สั่งให้ใช้ Cert จาก ACME

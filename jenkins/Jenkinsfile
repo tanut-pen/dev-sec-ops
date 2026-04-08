@@ -67,7 +67,7 @@ pipeline {
         
         # Container for API requests
         - name: curl
-          image: curlimages/curl:latest
+          image: alpine:latest
           command:
           - cat
           tty: true
@@ -104,7 +104,7 @@ pipeline {
     SONAR_PROJECT_NAME = 'docker-getting-started-todo-app'
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
-    DEFECTDOJO_URL = 'http://defectdojo.local'
+    DEFECTDOJO_URL = 'http://defectdojo-django.defectdojo.svc.cluster.local'
     DEFECTDOJO_ENGAGEMENT_ID = '1'
     DEFECTDOJO_PRODUCT_NAME = 'getting-started-todo-app'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
@@ -141,32 +141,64 @@ pipeline {
       }
     }
 
-    
     stage('SonarQube Analysis') {
       steps {
         // Use the nodejs container so scanner installation and Node runtime match.
         container('nodejs') {
+          withSonarQubeEnv('sonarqube') {
           withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
-            sh """
+            sh '''
               # Install sonar-scanner through npm.
               npm install -g sonarqube-scanner
 
               # Detect the Node.js executable path.
-              NODE_EXEC=\$(which node)
+              NODE_EXEC=$(which node)
               
               # Run the scan with the detected Node.js binary.
               sonar-scanner \
                 -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
-                -Dsonar.login=\${SONAR_TOKEN} \
-                -Dsonar.projectKey=${env.SONAR_PROJECT_KEY} \
-                -Dsonar.projectName=${env.SONAR_PROJECT_NAME} \
-                -Dsonar.projectVersion=${env.BUILD_NUMBER} \
+                -Dsonar.login=$SONAR_TOKEN \
+                -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+                -Dsonar.projectName=$SONAR_PROJECT_NAME \
+                -Dsonar.projectVersion=$BUILD_NUMBER \
                 -Dsonar.sources=backend,client \
                 -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/** \
                 -Dsonar.sourceEncoding=UTF-8 \
-                -Dsonar.nodejs.executable=\${NODE_EXEC}
-            """
+                -Dsonar.nodejs.executable=$NODE_EXEC
+
+              # Export SonarQube issues to JSON for DefectDojo import
+              curl -s -u $SONAR_TOKEN: http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000/api/issues/search?projectKeys=$SONAR_PROJECT_KEY&resolved=false&ps=500 > sonar-report.json
+            '''
           }
+        }
+        }
+      }
+    }
+
+    stage('Import SonarQube to DefectDojo') {
+      steps {
+        container('curl') {
+          sh '''
+            apk add -q curl
+
+            RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
+              -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
+              -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+              -H "Accept: application/json" \
+              -F "scan_type=SonarQube Scan" \
+              -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+              -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+              -F "active=true" \
+              -F "verified=false" \
+              -F "close_old_findings=false" \
+              -F "scan_date=$(date +%F)" \
+              -F "minimum_severity=Info" \
+              -F "file=@sonar-report.json" \
+              -w "\nHTTP_STATUS:%{http_code}")
+
+            echo "=== SONARQUBE IMPORT RESPONSE ==="
+            echo "$RESPONSE"
+          '''
         }
       }
     }
@@ -188,19 +220,24 @@ pipeline {
       }
     }
 
-    stage('Trivy Scan') {
-      steps {
+    stage('Vulnerability Scan') {
+    steps {
         container('trivy') {
-          sh """
-            trivy image \
-              --format json \
-              --output trivy-report.json \
-              --severity HIGH,CRITICAL \
-              ${IMAGE_NAME}
-          """
+            script {
+                // Define the dynamic image name (usually derived from previous build steps)
+                def imageName = "harbor.local:30002/my-project/getting-started-todo-app:${env.BUILD_NUMBER}"
+                
+                echo "Scanning Image: ${imageName}"
+
+                // 1. Generate HTML Report for Jenkins Artifacts
+                sh "trivy image --format template --template '@/contrib/html.tpl' --output trivy-report.html --severity HIGH,CRITICAL ${imageName}"
+
+                // 2. Generate JSON Report for DefectDojo
+                sh "trivy image --format json --output trivy-report.json --severity HIGH,CRITICAL ${imageName}"
+            }
         }
-      }
     }
+}
 
     stage('Push Image to Harbor') {
       when {
@@ -219,27 +256,34 @@ pipeline {
       }
     }
 
+
     stage('Import Scan to DefectDojo') {
       when {
         expression { return params.IMPORT_TO_DEFECTDOJO }
       }
       steps {
         container('curl') {
-          // เปลี่ยนมาใช้ Single Quotes (''') ตาม Best Practice ของ Jenkins
           sh '''
-            echo "URL: ${DEFECTDOJO_URL}"
-            curl -v -sS --connect-timeout 10 -m 60 -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
-              -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
-              -F "scan_type=Trivy Scan" \
-              -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
-              -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
-              -F "active=true" \
-              -F "verified=false" \
-              -F "close_old_findings=false" \
-              -F "scan_date=$(date +%F)" \
-              -F "minimum_severity=Low" \
-              -F "file=@trivy-report.json"
-          '''
+  apk add -q curl
+
+  RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
+    -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
+    -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+    -H "Accept: application/json" \
+    -F "scan_type=Trivy Scan" \
+    -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+    -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+    -F "active=true" \
+    -F "verified=false" \
+    -F "close_old_findings=false" \
+    -F "scan_date=$(date +%F)" \
+    -F "minimum_severity=Low" \
+    -F "file=@trivy-report.json" \
+    -w "\nHTTP_STATUS:%{http_code}")
+
+  echo "=== RESPONSE BODY ==="
+  echo "$RESPONSE"
+'''
         }
       }
     }
@@ -247,7 +291,7 @@ pipeline {
 
   post {
     always {
-      archiveArtifacts artifacts: 'trivy-report.json', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'trivy-report.json,sonar-report.json', allowEmptyArchive: true
     }
   }
 }

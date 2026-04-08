@@ -25,3 +25,8 @@ django:
     type: NodePort
     port: 8080
     nodePort: 30001
+  resources:
+    requests:
+      memory: "1000Mi"
+    limits:
+      memory: "2000Mi"

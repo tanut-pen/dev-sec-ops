@@ -8,3 +8,14 @@ server:
     nodePortHttp: 30004
   ingress:
     enabled: false
+
+repoServer:
+
+  livenessProbe:
+    timeoutSeconds: 10      
+    failureThreshold: 5     
+
+  
+  readinessProbe:
+    timeoutSeconds: 10
+    failureThreshold: 5
