@@ -13,39 +13,70 @@ The stack in this repo includes:
 - `Argo CD` for GitOps-style delivery
 - `Grafana Stack` for monitoring, dashboards, and alerting
 - `Trivy` for container image scanning
+- `Vault` for secrets management
+- `Uptime Kuma` for uptime monitoring
+- `Portainer` for Kubernetes UI management
+- `Kubeseal` (Sealed Secrets) for encrypted Kubernetes secrets
+- `GitLab` as an optional self-hosted Git server
 
 ## Project Structure
 
 ```text
 .
-├── k3d/start.sh
-├── helm_install.sh
+├── k3d/
+│   ├── start.sh
+│   └── readme.md
 ├── ingress.yaml
-├── Jenkins/
+├── CLAUDE.md
+├── jenkins/
 │   ├── install.sh
-│   ├── values-jenkins.yaml
+│   ├── values.yaml
+│   ├── readme.md
 │   └── Jenkinsfile
-├── SonarCube/
+├── sonarqube/
 │   ├── install.sh
 │   ├── values-sonar.yaml
-│   └── token.md
-├── Habor/
+│   └── readme.md
+├── harbor/
 │   ├── install.sh
-│   └── harbor-local.yaml
-├── DefectDojo/
+│   ├── harbor-local.yaml
+│   └── readme.md
+├── defectdojo/
 │   ├── install.sh
-│   └── values-dojo.yaml
-└── grafana/
-    ├── install.sh
-    ├── readme.md
-    └── values-grafana.yaml
+│   ├── values-dojo.yaml
+│   └── readme.md
+├── argocd/
+│   ├── install.sh
+│   ├── values-argocd.yaml
+│   ├── values-rollouts.yaml
+│   └── readme.md
+├── grafana/
+│   ├── install.sh
+│   ├── values-grafana.yaml
+│   └── readme.md
+├── vault/
+│   ├── install.sh
+│   └── values.yaml
+├── uptime-kuma/
+│   ├── install.sh
+│   ├── values.yaml
+│   └── readme.md
+├── portainer/
+│   ├── install.sh
+│   └── values.yaml
+├── kubeseal/
+│   └── install.sh
+├── gitlab/
+│   └── install.sh
+└── lab/
+    └── ACME/
 ```
 
 ## What This Project Does
 
 This project is designed as a local DevSecOps lab. It creates a Kubernetes environment and installs the core tools needed to run a simple secure delivery pipeline.
 
-It also includes a monitoring stack so you can observe the health of the local platform with Grafana dashboards backed by Prometheus.
+It also includes a monitoring stack so you can observe the health of the local platform with Grafana dashboards backed by Prometheus, and Uptime Kuma for service uptime tracking.
 
 The included Jenkins pipeline performs these steps:
 
@@ -66,6 +97,7 @@ Install these tools on your machine before using this repository:
 - `kubectl`
 - `helm`
 - `k3d`
+- `kubeseal` CLI (for Sealed Secrets)
 
 This repo assumes you are working in a local environment where Docker is available and Kubernetes workloads can mount `/var/run/docker.sock`.
 
@@ -73,160 +105,188 @@ This repo assumes you are working in a local environment where Docker is availab
 
 ### 1. Create the local cluster
 
-Run:
-
 ```bash
 ./k3d/start.sh
 ```
 
-This creates a cluster named `my-cluster` with:
+Creates a cluster named `my-cluster` with:
 
-- 1 server node
-- 1 agent node
+- 1 server node, 1 agent node
 - K3s image `rancher/k3s:v1.22.7-k3s1-amd64`
 
-### 2. Add Helm repositories
-
-Run:
+### 2. Install Jenkins
 
 ```bash
-./helm_install.sh
-```
-
-This adds the Helm repositories for:
-
-- DefectDojo
-- SonarQube
-- Harbor
-- Jenkins
-- Argo CD
-- Prometheus Community
-
-### 3. Install Jenkins
-
-Run:
-
-```bash
-cd Jenkins
+cd jenkins
 ./install.sh
 ```
-
-Important defaults from `Jenkins/values-jenkins.yaml`:
 
 - Namespace: `jenkins`
-- Service type: `NodePort`
-- NodePort: `30003`
+- Service type: `NodePort` — port `30003`
 - Admin password: `admin`
-- Persistent volume size: `5Gi`
+- Persistent volume size: `8Gi`
 
-### 4. Install SonarQube
-
-Run:
+### 3. Install SonarQube
 
 ```bash
-cd SonarCube
+cd sonarqube
 ./install.sh
 ```
-
-Current install behavior from `SonarCube/install.sh`:
 
 - Namespace: `sonarqube`
-- Community mode enabled
-- Monitoring passcode set during install
+- Community edition
+- Monitoring passcode: `admin123`
+- Ingress host: `sonarqube.local`
 
-There is also a values file at `SonarCube/values-sonar.yaml`, but the current install script does not use it.
-
-### 5. Install Harbor
-
-Run:
+### 4. Install Harbor
 
 ```bash
-cd Habor
+cd harbor
 ./install.sh
 ```
 
-Current Harbor settings from `Habor/harbor-local.yaml`:
-
-- Exposed with `NodePort`
+- Namespace: `harbor`
 - HTTP only, TLS disabled
 - External URL: `http://localhost:30002`
-- Registry port: `30002`
+- Ingress host: `harbor.local`
 
-### 6. Install DefectDojo
-
-Run:
+### 5. Install DefectDojo
 
 ```bash
-cd DefectDojo
+cd defectdojo
 ./install.sh
 ```
 
-Current DefectDojo settings from `DefectDojo/values-dojo.yaml`:
-
 - Namespace: `defectdojo`
-- Django service exposed as `NodePort`
-- NodePort: `30001`
-- PostgreSQL persistence enabled
-- Valkey persistence enabled
+- Django service exposed via ingress at `defectdojo.local`
+- PostgreSQL and Valkey persistence enabled
 
-### 7. Install Argo CD
-
-Run:
+### 6. Install Argo CD
 
 ```bash
 cd argocd
 ./install.sh
 ```
 
-Current Argo CD settings from `argocd/values-argocd.yaml`:
-
 - Namespace: `argocd`
-- Service type: `NodePort`
-- HTTP NodePort: `30004`
-- Chart ingress disabled
+- Service type: `NodePort` — port `30004`
+- Ingress host: `argocd.local`
 - Server runs in insecure mode for local ingress compatibility
-- The same install script also installs Argo Rollouts in namespace `argo-rollouts`
+- Also installs Argo Rollouts in namespace `argo-rollouts`
 
-### 8. Install Grafana Stack
-
-Run:
+### 7. Install Grafana Stack
 
 ```bash
 cd grafana
 ./install.sh
 ```
 
-Current Grafana stack settings from `grafana/values-grafana.yaml`:
-
 - Namespace: `grafana`
-- Helm release: `grafana`
 - Chart: `prometheus-community/kube-prometheus-stack`
-- Grafana service type: `NodePort`
-- Grafana NodePort: `30005`
+- Grafana service type: `NodePort` — port `30005`
+- Admin password: `admin`
 - Prometheus retention: `7d`
+- Ingress host: `grafana.local`
+
+### 8. Install Vault
+
+```bash
+cd vault
+./install.sh
+```
+
+- Namespace: `default` (installs to active context namespace)
+- Chart: `hashicorp/vault`
+- Run `vault operator init` after install to get the root token and unseal keys
+
+### 9. Install Uptime Kuma
+
+```bash
+cd uptime-kuma
+./install.sh
+```
+
+- Namespace: `monitoring`
+- Chart: `uptime-kuma/uptime-kuma` from `helm.irsigler.cloud`
+- Service type: `NodePort` — port `30006`
+- 4Gi persistent volume
+- Set credentials on first login
+
+### 10. Install Portainer
+
+```bash
+cd portainer
+./install.sh
+```
+
+- Namespace: `portainer`
+- Chart: `portainer/portainer` (Community Edition)
+- HTTP NodePort: `30777`
+- HTTPS NodePort: `30779`
+- 10Gi persistent volume
+
+### 11. Install Kubeseal (Sealed Secrets)
+
+```bash
+cd kubeseal
+./install.sh
+```
+
+- Namespace: `kube-system`
+- Chart: `sealed-secrets/sealed-secrets` from `bitnami-labs.github.io`
+- Installs the controller; use the `kubeseal` CLI to encrypt secrets
+
+### 12. Install GitLab *(optional)*
+
+```bash
+cd gitlab
+./install.sh
+```
+
+- Namespace: `gitlab`
+- Requires a real domain and external IP before use
+- Edit `install.sh` to set `global.hosts.domain`, `global.hosts.externalIP`, and `certmanager-issuer.email`
 
 ## Accessing Services
 
-Based on the current configuration, the main local access points are:
+| Service | NodePort URL | Ingress Host |
+|---------|-------------|--------------|
+| Jenkins | `http://localhost:30003` | `jenkins.local` |
+| SonarQube | — | `sonarqube.local` |
+| Harbor | `http://localhost:30002` | `harbor.local` |
+| DefectDojo | — | `defectdojo.local` |
+| Argo CD | `http://localhost:30004` | `argocd.local` |
+| Grafana | `http://localhost:30005` | `grafana.local` |
+| Uptime Kuma | `http://localhost:30006` | `uptime-kuma.local` |
+| Portainer (HTTP) | `http://localhost:30777` | — |
+| Portainer (HTTPS) | `https://localhost:30779` | — |
 
-- Jenkins: `http://localhost:30003`
-- Harbor: `http://localhost:30002`
-- DefectDojo: `http://localhost:30001`
-- Argo CD: `http://localhost:30004`
-- Grafana: `http://localhost:30005`
+> Ingress hosts require a running Ingress controller and `/etc/hosts` entries pointing to your cluster IP.
 
-There is also an ingress manifest at `ingress.yaml` that defines:
+## Ingress Rules (`ingress.yaml`)
 
-- `jenkins.local`
-- `sonarqube.local`
-- `argocd.local`
-- `grafana.local`
+The `ingress.yaml` at the repo root defines rules for:
 
-Note: this will only work if your cluster has an Ingress controller installed and your local DNS or `/etc/hosts` is configured accordingly. The current `k3d/start.sh` script does not install an Ingress controller.
+- `jenkins.local` → `jenkins:8080`
+- `sonarqube.local` → `sonarqube-sonarqube:9000`
+- `argocd.local` → `argocd-server:80`
+- `harbor.local` → `my-harbor-portal:80`
+- `defectdojo.local` → `defectdojo-django:80`
+- `grafana.local` → `grafana-grafana:80`
+
+Apply with:
+
+```bash
+kubectl apply -f ingress.yaml
+```
+
+## Credentials Reference
+
+See [`CLAUDE.md`](./CLAUDE.md) for a full table of default usernames, passwords, and tokens for each service.
 
 ## Jenkins Pipeline Overview
 
-The pipeline definition is in `Jenkins/Jenkinsfile`.
+The pipeline definition is in `jenkins/Jenkinsfile`.
 
 ### Pipeline runtime
 
@@ -239,65 +299,56 @@ Jenkins uses a Kubernetes agent pod with multiple containers:
 
 ### Pipeline parameters
 
-The pipeline exposes two boolean parameters:
-
 - `PUSH_TO_HARBOR`
 - `IMPORT_TO_DEFECTDOJO`
 
 ### Demo application source
 
-The pipeline clones this repository:
-
-- `https://github.com/docker/getting-started-todo-app.git`
+```
+https://github.com/docker/getting-started-todo-app.git
+```
 
 ### Image naming
 
-The built image follows this pattern:
-
-```text
+```
 10.72.110.5:30002/my-project/getting-started-todo-app:<build-number>
 ```
 
-### External dependencies expected by Jenkins
+### Jenkins credentials required
 
-The pipeline expects these Jenkins credentials to already exist:
-
-- `harbor-credentials`
-- `defectdojo-api-token`
-- `sonar`
-
-It also assumes SonarQube and DefectDojo are reachable from inside the cluster.
+| Credential ID | Type | Usage |
+|---------------|------|-------|
+| `harbor-credentials` | Username/Password | Push images to Harbor |
+| `defectdojo-api-token` | Secret text | Import Trivy reports |
+| `sonar` | Secret text | SonarQube analysis |
 
 ## Notes and Limitations
 
-- The repository currently stores sensitive values in plain text, such as passwords or tokens in config files. For real use, move these into Kubernetes secrets or Jenkins credentials.
-- `SonarCube/token.md` contains a token file and should not be committed in a production repository.
-- `Jenkins/install.sh` contains an extra line after the Helm command that looks like a copied secret or token and should be cleaned up.
-- The SonarQube install script currently installs with inline `--set` values instead of using `SonarCube/values-sonar.yaml`.
-- The Harbor folder is named `Habor/`, which is likely a typo, but the current README keeps the existing folder name to match the repository.
-- The Jenkins pipeline mounts the host Docker socket. That is convenient for a lab, but not a hardened production setup.
+- Sensitive values (passwords, tokens) are stored in plain text in several config files. For production use, move these into Kubernetes Secrets or a secrets manager like Vault.
+- The SonarQube install script uses inline `--set` flags instead of `values-sonar.yaml`.
+- The Jenkins pipeline mounts the host Docker socket — convenient for a lab, not for hardened production.
+- GitLab requires significant resources and external DNS; it is included as a reference install script only.
+- Vault is installed without a namespace flag — run `vault operator init` after deploy and save the unseal keys securely.
 
-## Recommended Usage Order
-
-If you want to bring the whole environment up from scratch, use this order:
+## Recommended Startup Order
 
 ```bash
 ./k3d/start.sh
-./helm_install.sh
 
-cd Habor && ./install.sh
-cd ../SonarCube && ./install.sh
-cd ../DefectDojo && ./install.sh
-cd ../Jenkins && ./install.sh
+cd kubeseal && ./install.sh
+cd ../harbor && ./install.sh
+cd ../sonarqube && ./install.sh
+cd ../defectdojo && ./install.sh
+cd ../jenkins && ./install.sh
+cd ../argocd && ./install.sh
+cd ../grafana && ./install.sh
+cd ../vault && ./install.sh
+cd ../uptime-kuma && ./install.sh
+cd ../portainer && ./install.sh
+
+kubectl apply -f ingress.yaml
 ```
-
-Then:
-
-1. Open Jenkins and complete the initial configuration.
-2. Create the required Jenkins credentials.
-3. Create a pipeline job using `Jenkins/Jenkinsfile`.
-4. Run the pipeline with optional push and DefectDojo import enabled as needed.
 
 ## Summary
 
-This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, and DefectDojo into a simple environment suitable for demos, learning, and experimentation.
+This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, DefectDojo, Argo CD, Grafana, Vault, Uptime Kuma, Portainer, and Kubeseal into a single environment suitable for demos, learning, and experimentation.
