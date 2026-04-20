@@ -1,0 +1,126 @@
+# Uptime Kuma Helm values
+# Ref: https://github.com/dirsigler/uptime-kuma-helm
+# Chart default values: https://raw.githubusercontent.com/dirsigler/uptime-kuma-helm/main/charts/uptime-kuma/values.yaml
+
+image:
+  repository: louislam/uptime-kuma
+  pullPolicy: IfNotPresent
+  tag: "2.1.1"
+
+# Use Deployment (true) or StatefulSet (false)
+useDeploy: true
+
+serviceAccount:
+  create: false
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: NodePort
+  port: 3001
+  nodePort: 30006
+  loadBalancerIP:
+  annotations: {}
+
+ingress:
+  enabled: false
+  # className: "nginx"
+  extraLabels: {}
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "3600"
+    nginx.ingress.kubernetes.io/server-snippets: |
+      location / {
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_http_version 1.1;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-For $remote_addr;
+        proxy_set_header Host $host;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_cache_bypass $http_upgrade;
+      }
+  hosts:
+    - host: uptime-kuma.local
+      paths:
+        - path: /
+          pathType: ImplementationSpecific
+  tls: []
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+livenessProbe:
+  enabled: true
+  failureThreshold: 3
+  initialDelaySeconds: 180
+  periodSeconds: 10
+  successThreshold: 1
+  timeoutSeconds: 2
+  exec:
+    command:
+      - "extra/healthcheck"
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 10
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+  successThreshold: 1
+  exec:
+    command: []
+  httpGet:
+    path: /
+    port: 3001
+    scheme: HTTP
+    httpHeaders: []
+
+volume:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 4Gi
+  storageClassName: ""
+  existingClaim: ""
+
+additionalVolumes: []
+additionalVolumeMounts: []
+
+strategy:
+  type: RollingUpdate
+
+# External database (disabled — uses SQLite by default)
+externalDatabase:
+  type: "mariadb"
+  enabled: false
+  hostname: ""
+  port: 3306
+  database: uptime_kuma
+  username: uptime_kuma
+  password: ""
+  existingSecret: ""
+  existingSecretPasswordKey: "password"
+  existingSecretUsernameKey: "username"
+
+# Prometheus ServiceMonitor (requires kube-prometheus-stack)
+serviceMonitor:
+  enabled: false
+  interval: 60s
+  scrapeTimeout: 10s
