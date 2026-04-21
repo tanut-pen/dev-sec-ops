@@ -1,0 +1,394 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# Argo CD — Application List
+#
+# Managed by app-of-apps.yaml — do NOT apply this file directly.
+# Argo CD will auto-discover and apply it via the app-of-apps root Application.
+#
+# Each Application uses two sources (Argo CD >= 2.6):
+#   source[0]: Helm chart from the public chart repo
+#   source[1]: This git repo — provides values files via $values ref
+#
+# All apps have automated sync enabled:
+#   - selfHeal: re-applies if someone manually changes the cluster
+#   - prune: false (keep resources if removed from values — safer for stateful apps)
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ── Jenkins ───────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jenkins
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.jenkins.io
+      chart: jenkins
+      targetRevision: "*"
+      helm:
+        valueFiles:
+          - $values/jenkins/values.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jenkins
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── SonarQube ─────────────────────────────────────────────────────────────────
+# Note: original install.sh uses --set flags (no values file).
+# Using values-sonar.yaml with community edition settings.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sonarqube
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://SonarSource.github.io/helm-chart-sonarqube
+      chart: sonarqube
+      targetRevision: "*"
+      helm:
+        valueFiles:
+          - $values/sonarqube/values-sonar.yaml
+        parameters:
+          - name: community.enabled
+            value: "true"
+          - name: monitoringPasscode
+            value: "admin123"
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: sonarqube
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Harbor ────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: harbor
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.goharbor.io
+      chart: harbor
+      targetRevision: "*"
+      helm:
+        releaseName: my-harbor
+        valueFiles:
+          - $values/harbor/harbor-local.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: harbor
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── DefectDojo ────────────────────────────────────────────────────────────────
+# Note: createSecret/createValkeySecret/createPostgresqlSecret are one-time
+# bootstrap flags — intentionally excluded here to avoid re-creation on sync.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: defectdojo
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
+      chart: defectdojo
+      targetRevision: "*"
+      helm:
+        valueFiles:
+          - $values/defectdojo/values-dojo.yaml
+        parameters:
+          - name: django.ingress.enabled
+            value: "false"
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: defectdojo
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Argo CD ───────────────────────────────────────────────────────────────────
+# Managing Argo CD itself with Argo CD (app-of-apps pattern).
+# selfHeal: false — avoid Argo CD restarting itself unexpectedly.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argocd
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-cd
+      targetRevision: "*"
+      helm:
+        releaseName: argocd
+        valueFiles:
+          - $values/argocd/values-argocd.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argocd
+  syncPolicy:
+    automated:
+      selfHeal: false   # intentionally false — avoid self-restart loop
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Argo Rollouts ─────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: argo-rollouts
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://argoproj.github.io/argo-helm
+      chart: argo-rollouts
+      targetRevision: "*"
+      helm:
+        releaseName: argo-rollouts
+        valueFiles:
+          - $values/argocd/values-rollouts.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: argo-rollouts
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Grafana (kube-prometheus-stack) ───────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: grafana
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://prometheus-community.github.io/helm-charts
+      chart: kube-prometheus-stack
+      targetRevision: "*"
+      helm:
+        releaseName: grafana
+        valueFiles:
+          - $values/grafana/values-grafana.yaml
+        skipCrds: false
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: grafana
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true   # needed for large CRDs in kube-prometheus-stack
+---
+# ── Vault ─────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.releases.hashicorp.com
+      chart: vault
+      targetRevision: "*"
+      helm:
+        releaseName: vault
+        valueFiles:
+          - $values/vault/vault-values.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Uptime Kuma ───────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: uptime-kuma
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://helm.irsigler.cloud
+      chart: uptime-kuma
+      targetRevision: "*"
+      helm:
+        releaseName: uptime-kuma
+        valueFiles:
+          - $values/uptime-kuma/values.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Portainer ─────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: portainer
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://portainer.github.io/k8s/
+      chart: portainer
+      targetRevision: "*"
+      helm:
+        releaseName: portainer
+        valueFiles:
+          - $values/portainer/values.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: portainer
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Sealed Secrets (kubeseal) ─────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: sealed-secrets
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://bitnami-labs.github.io/sealed-secrets
+      chart: sealed-secrets
+      targetRevision: "*"
+      helm:
+        releaseName: sealed-secrets
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kube-system
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Kong Gateway ──────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kong
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  sources:
+    - repoURL: https://charts.konghq.com
+      chart: kong
+      targetRevision: "*"
+      helm:
+        releaseName: kong
+        valueFiles:
+          - $values/kong/kong-values.yaml
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kong
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: false
+    syncOptions:
+      - CreateNamespace=true
