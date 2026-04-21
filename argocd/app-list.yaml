@@ -211,37 +211,37 @@ spec:
       - CreateNamespace=true
 ---
 # ── Grafana (kube-prometheus-stack) ───────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: grafana
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  project: default
-  sources:
-    - repoURL: https://prometheus-community.github.io/helm-charts
-      chart: kube-prometheus-stack
-      targetRevision: "*"
-      helm:
-        releaseName: grafana
-        valueFiles:
-          - $values/grafana/values-grafana.yaml
-        skipCrds: false
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: grafana
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: false
-    syncOptions:
-      - CreateNamespace=true
-      - ServerSideApply=true   # needed for large CRDs in kube-prometheus-stack
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: grafana
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   project: default
+#   sources:
+#     - repoURL: https://prometheus-community.github.io/helm-charts
+#       chart: kube-prometheus-stack
+#       targetRevision: "*"
+#       helm:
+#         releaseName: grafana
+#         valueFiles:
+#           - $values/grafana/values-grafana.yaml
+#         skipCrds: false
+#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: grafana
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: false
+#     syncOptions:
+#       - CreateNamespace=true
+#       - ServerSideApply=true   # needed for large CRDs in kube-prometheus-stack
 ---
 # ── Vault ─────────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
@@ -306,35 +306,35 @@ spec:
       - CreateNamespace=true
 ---
 # ── Portainer ─────────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: portainer
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  project: default
-  sources:
-    - repoURL: https://portainer.github.io/k8s/
-      chart: portainer
-      targetRevision: "*"
-      helm:
-        releaseName: portainer
-        valueFiles:
-          - $values/portainer/values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: portainer
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: false
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: portainer
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   project: default
+#   sources:
+#     - repoURL: https://portainer.github.io/k8s/
+#       chart: portainer
+#       targetRevision: "*"
+#       helm:
+#         releaseName: portainer
+#         valueFiles:
+#           - $values/portainer/values.yaml
+#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: portainer
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: false
+#     syncOptions:
+#       - CreateNamespace=true
 ---
 # ── Sealed Secrets (kubeseal) ─────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
