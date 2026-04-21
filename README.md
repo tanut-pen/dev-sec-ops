@@ -17,6 +17,7 @@ The stack in this repo includes:
 - `Uptime Kuma` for uptime monitoring
 - `Portainer` for Kubernetes UI management
 - `Kubeseal` (Sealed Secrets) for encrypted Kubernetes secrets
+- `Kong Gateway` as an API gateway and Kubernetes Ingress controller
 - `GitLab` as an optional self-hosted Git server
 
 ## Project Structure
@@ -68,6 +69,10 @@ The stack in this repo includes:
 │   └── install.sh
 ├── gitlab/
 │   └── install.sh
+├── kong/
+│   ├── install.sh
+│   ├── values.yaml
+│   └── readme.md
 └── lab/
     └── ACME/
 ```
@@ -236,7 +241,22 @@ cd kubeseal
 - Chart: `sealed-secrets/sealed-secrets` from `bitnami-labs.github.io`
 - Installs the controller; use the `kubeseal` CLI to encrypt secrets
 
-### 12. Install GitLab *(optional)*
+### 12. Install Kong Gateway
+
+```bash
+cd kong
+./install.sh
+```
+
+- Namespace: `kong`
+- Chart: `kong/kong` from `charts.konghq.com`
+- Mode: DB-less (no database required)
+- Admin API NodePort: `30007` → `http://localhost:30007`
+- HTTP Proxy NodePort: `30008` → `http://localhost:30008`
+- HTTPS Proxy NodePort: `30009` → `https://localhost:30009`
+- Kubernetes Ingress Controller enabled (uses `ingressClassName: kong`)
+
+### 13. Install GitLab *(optional)*
 
 ```bash
 cd gitlab
@@ -260,6 +280,9 @@ cd gitlab
 | Uptime Kuma | `http://localhost:30006` | `uptime-kuma.local` |
 | Portainer (HTTP) | `http://localhost:30777` | — |
 | Portainer (HTTPS) | `https://localhost:30779` | — |
+| Kong Admin API | `http://localhost:30007` | — |
+| Kong Proxy (HTTP) | `http://localhost:30008` | — |
+| Kong Proxy (HTTPS) | `https://localhost:30009` | — |
 
 > Ingress hosts require a running Ingress controller and `/etc/hosts` entries pointing to your cluster IP.
 
@@ -345,10 +368,11 @@ cd ../grafana && ./install.sh
 cd ../vault && ./install.sh
 cd ../uptime-kuma && ./install.sh
 cd ../portainer && ./install.sh
+cd ../kong && ./install.sh
 
 kubectl apply -f ingress.yaml
 ```
 
 ## Summary
 
-This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, DefectDojo, Argo CD, Grafana, Vault, Uptime Kuma, Portainer, and Kubeseal into a single environment suitable for demos, learning, and experimentation.
+This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, DefectDojo, Argo CD, Grafana, Vault, Uptime Kuma, Portainer, Kubeseal, and Kong Gateway into a single environment suitable for demos, learning, and experimentation.

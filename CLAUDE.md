@@ -15,6 +15,8 @@
 | Grafana | http://localhost:30005 | admin | prom-operator |
 | Uptime Kuma | http://localhost:30006 | *(set on first login)* | *(set on first login)* |
 | Vault | — | root | *(see init output)* |
+| Kong Admin API | http://localhost:30007 | — | *(no auth by default)* |
+| Kong Proxy (HTTP) | http://localhost:30008 | — | — |
 
 ## Jenkins Credentials (stored in Jenkins)
 
@@ -35,6 +37,7 @@ helm repo add argo          https://argoproj.github.io/argo-helm
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm repo add hashicorp    https://helm.releases.hashicorp.com
 helm repo add uptime-kuma  https://helm.irsigler.cloud
+helm repo add kong         https://charts.konghq.com
 helm repo update
 ```
 
