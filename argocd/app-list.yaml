@@ -10,7 +10,7 @@
 #
 # All apps have automated sync enabled:
 #   - selfHeal: re-applies if someone manually changes the cluster
-#   - prune: false (keep resources if removed from values — safer for stateful apps)
+#   - prune: true (keep resources if removed from values — safer for stateful apps)
 # ──────────────────────────────────────────────────────────────────────────────
 
 # ── Jenkins ───────────────────────────────────────────────────────────────────
@@ -39,7 +39,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -76,7 +76,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -107,7 +107,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -142,7 +142,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -175,7 +175,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: false   # intentionally false — avoid self-restart loop
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -206,7 +206,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -238,7 +238,7 @@ spec:
 #   syncPolicy:
 #     automated:
 #       selfHeal: true
-#       prune: false
+#       prune: true
 #     syncOptions:
 #       - CreateNamespace=true
 #       - ServerSideApply=true   # needed for large CRDs in kube-prometheus-stack
@@ -270,7 +270,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -301,7 +301,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -332,7 +332,7 @@ spec:
 #   syncPolicy:
 #     automated:
 #       selfHeal: true
-#       prune: false
+#       prune: true
 #     syncOptions:
 #       - CreateNamespace=true
 ---
@@ -358,7 +358,7 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
 ---
@@ -389,6 +389,6 @@ spec:
   syncPolicy:
     automated:
       selfHeal: true
-      prune: false
+      prune: true
     syncOptions:
       - CreateNamespace=true
