@@ -69,50 +69,88 @@ helm show values kong/kong > kong-values.yaml
 
 ---
 
-## Path-based Routing (kong-config.yaml)
+## Demo — Kong as an API Gateway
 
-All services are exposed through Kong proxy on a single port using path prefixes.
-Access via: `http://localhost:30008/<service>/`
+The `demo/` folder contains a complete working example showing Kong's real purpose:
+routing, rate-limiting, key authentication, and header injection for microservices.
 
-| Path prefix    | Upstream service                                         | Port |
-|----------------|----------------------------------------------------------|------|
-| `/jenkins`     | `jenkins.jenkins.svc.cluster.local`                      | 8080 |
-| `/sonarqube`   | `sonarqube-sonarqube.sonarqube.svc.cluster.local`        | 9000 |
-| `/harbor`      | `my-harbor-portal.harbor.svc.cluster.local`              | 80   |
-| `/defectdojo`  | `defectdojo-django.defectdojo.svc.cluster.local`         | 80   |
-| `/argocd`      | `argocd-server.argocd.svc.cluster.local`                 | 80   |
-| `/grafana`     | `grafana-grafana.grafana.svc.cluster.local`              | 80   |
-| `/uptime-kuma` | `uptime-kuma.monitoring.svc.cluster.local`               | 3001 |
-| `/portainer`   | `portainer.portainer.svc.cluster.local`                  | 9000 |
-| `/vault`       | `vault.default.svc.cluster.local`                        | 8200 |
+### Files
 
-> `strip_path: true` is set on all routes — Kong removes the prefix before forwarding to the upstream.
+| File | Purpose |
+|------|---------|
+| `demo/namespace.yaml` | Creates the `demo` namespace |
+| `demo/echo-app.yaml` | Echo server — reflects requests as JSON |
+| `demo/httpbin-app.yaml` | HTTPBin — standard HTTP testing service |
+| `demo/kong-demo-config.yaml` | Kong deck config with plugins |
 
-### ⚠️ Known caveats
+### Apply (in order)
 
-- **Harbor** and **Argo CD** have hardcoded absolute asset paths (`/`-rooted). They may need sub-path configuration or to be accessed via their direct NodePort instead.
-- **Uptime Kuma** requires WebSocket (`Upgrade: websocket`) — Kong supports this natively over HTTP.
-- **Grafana** requires `GF_SERVER_ROOT_URL` set to include the subpath (`/grafana/`) in its Helm values to render assets correctly.
-- **SonarQube** requires `sonar.web.context=/sonarqube` in its Helm values for sub-path support.
+```bash
+# 1. Deploy the sample apps
+kubectl apply -f kong/demo/namespace.yaml
+kubectl apply -f kong/demo/echo-app.yaml
+kubectl apply -f kong/demo/httpbin-app.yaml
+
+# 2. Wait for pods to be ready
+kubectl get pods -n demo -w
+
+# 3. Push config to Kong (DB-less sync)
+curl -X POST http://localhost:31313/config \
+  -F config=@kong/demo/kong-demo-config.yaml
+```
+
+### Routes configured
+
+| Route | URL | Auth | Plugin |
+|-------|-----|------|--------|
+| `/echo` | `http://localhost:30008/echo/` | None | Header injection |
+| `/httpbin` | `http://localhost:30008/httpbin/get` | None | Rate-limit 10 req/min |
+| `/secure` | `http://localhost:30008/secure/get` | API Key | Rate-limit 30 req/min |
+
+### Test the routes
+
+```bash
+# 1. Echo — see all request headers and env reflected back as JSON
+curl http://localhost:30008/echo/
+
+# 2. HTTPBin — standard /get response (rate-limited to 10/min)
+curl http://localhost:30008/httpbin/get
+
+# Check rate-limit headers in response:
+curl -i http://localhost:30008/httpbin/get | grep X-RateLimit
+
+# 3. Secure endpoint — without key (returns 401)
+curl http://localhost:30008/secure/get
+
+# Secure endpoint — with API key
+curl http://localhost:30008/secure/get -H "apikey: my-secret-api-key"
+```
+
+### What each plugin does
+
+| Plugin | Service | Effect |
+|--------|---------|--------|
+| `request-transformer` | echo, httpbin | Adds `X-Forwarded-By: kong-gateway` header upstream |
+| `rate-limiting` | httpbin | Max 10 req/min per IP; returns `429` when exceeded |
+| `key-auth` | secure | Requires `apikey:` header; returns `401` without it |
+| `rate-limiting` | secure | Max 30 req/min per consumer (authenticated) |
 
 ---
 
 ## deck Commands
 
 ```bash
-# Apply config to Kong (sync)
-deck gateway sync kong-config.yaml --kong-addr http://localhost:31313
+# Apply demo config to Kong
+curl -X POST http://localhost:31313/config \
+  -F config=@kong/demo/kong-demo-config.yaml
 
-# Preview changes without applying
+# Preview changes (diff)
 deck gateway diff kong-config.yaml --kong-addr http://localhost:31313
 
 # Dump current live config to file
 deck gateway dump -o kong-config-new.yaml --kong-addr http://localhost:31313
-```
 
-## Dbless mode sync
-
-```bash
+# Wipe all config (reset)
 curl -X POST http://localhost:31313/config \
   -F config=@kong-config.yaml
 ```

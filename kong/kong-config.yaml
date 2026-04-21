@@ -1,19 +1,56 @@
 _format_version: "3.0"
+consumers:
+- keyauth_credentials:
+  - key: my-secret-api-key
+  username: demo-user
 services:
-- connect_timeout: 60000
+- connect_timeout: 10000
   enabled: true
-  host: argocd-server.argocd.svc.cluster.local
-  name: argocd
+  host: echo.demo.svc.cluster.local
+  name: echo-service
+  plugins:
+  - config:
+      add:
+        body: []
+        headers:
+        - X-Forwarded-By:kong-gateway
+        - X-Demo-Service:echo
+        querystring: []
+      append:
+        body: []
+        headers: []
+        querystring: []
+      http_method: null
+      remove:
+        body: []
+        headers: []
+        querystring: []
+      rename:
+        body: []
+        headers: []
+        querystring: []
+      replace:
+        body: []
+        headers: []
+        querystring: []
+        uri: null
+    enabled: true
+    name: request-transformer
+    protocols:
+    - grpc
+    - grpcs
+    - http
+    - https
   port: 80
   protocol: http
-  read_timeout: 60000
-  retries: 5
+  read_timeout: 10000
+  retries: 3
   routes:
   - https_redirect_status_code: 426
-    name: argocd-route
+    name: echo-route
     path_handling: v0
     paths:
-    - /argocd
+    - /echo
     preserve_host: false
     protocols:
     - http
@@ -22,21 +59,81 @@ services:
     request_buffering: true
     response_buffering: true
     strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
+  write_timeout: 10000
+- connect_timeout: 10000
   enabled: true
-  host: defectdojo-django.defectdojo.svc.cluster.local
-  name: defectdojo
+  host: httpbin.demo.svc.cluster.local
+  name: httpbin-secure-service
+  plugins:
+  - config:
+      anonymous: null
+      hide_credentials: true
+      key_in_body: false
+      key_in_header: true
+      key_in_query: true
+      key_names:
+      - apikey
+      realm: null
+      run_on_preflight: true
+    enabled: true
+    name: key-auth
+    protocols:
+    - grpc
+    - grpcs
+    - http
+    - https
+  - config:
+      day: null
+      error_code: 429
+      error_message: API rate limit exceeded
+      fault_tolerant: true
+      header_name: null
+      hide_client_headers: false
+      hour: null
+      limit_by: consumer
+      minute: 30
+      month: null
+      path: null
+      policy: local
+      redis:
+        database: 0
+        host: null
+        password: null
+        port: 6379
+        server_name: null
+        ssl: false
+        ssl_verify: false
+        timeout: 2000
+        username: null
+      redis_database: 0
+      redis_host: null
+      redis_password: null
+      redis_port: 6379
+      redis_server_name: null
+      redis_ssl: false
+      redis_ssl_verify: false
+      redis_timeout: 2000
+      redis_username: null
+      second: null
+      sync_rate: -1
+      year: null
+    enabled: true
+    name: rate-limiting
+    protocols:
+    - grpc
+    - grpcs
+    - http
+    - https
   port: 80
   protocol: http
-  read_timeout: 60000
-  retries: 5
+  read_timeout: 10000
+  retries: 3
   routes:
   - https_redirect_status_code: 426
-    name: defectdojo-route
+    name: secure-route
     path_handling: v0
     paths:
-    - /defectdojo
+    - /secure
     preserve_host: false
     protocols:
     - http
@@ -45,21 +142,96 @@ services:
     request_buffering: true
     response_buffering: true
     strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
+  write_timeout: 10000
+- connect_timeout: 10000
   enabled: true
-  host: grafana-grafana.grafana.svc.cluster.local
-  name: grafana
+  host: httpbin.demo.svc.cluster.local
+  name: httpbin-service
+  plugins:
+  - config:
+      day: null
+      error_code: 429
+      error_message: API rate limit exceeded
+      fault_tolerant: true
+      header_name: null
+      hide_client_headers: false
+      hour: null
+      limit_by: ip
+      minute: 10
+      month: null
+      path: null
+      policy: local
+      redis:
+        database: 0
+        host: null
+        password: null
+        port: 6379
+        server_name: null
+        ssl: false
+        ssl_verify: false
+        timeout: 2000
+        username: null
+      redis_database: 0
+      redis_host: null
+      redis_password: null
+      redis_port: 6379
+      redis_server_name: null
+      redis_ssl: false
+      redis_ssl_verify: false
+      redis_timeout: 2000
+      redis_username: null
+      second: null
+      sync_rate: -1
+      year: null
+    enabled: true
+    name: rate-limiting
+    protocols:
+    - grpc
+    - grpcs
+    - http
+    - https
+  - config:
+      add:
+        body: []
+        headers:
+        - X-Forwarded-By:kong-gateway
+        - X-Demo-Service:httpbin
+        querystring: []
+      append:
+        body: []
+        headers: []
+        querystring: []
+      http_method: null
+      remove:
+        body: []
+        headers: []
+        querystring: []
+      rename:
+        body: []
+        headers: []
+        querystring: []
+      replace:
+        body: []
+        headers: []
+        querystring: []
+        uri: null
+    enabled: true
+    name: request-transformer
+    protocols:
+    - grpc
+    - grpcs
+    - http
+    - https
   port: 80
   protocol: http
-  read_timeout: 60000
-  retries: 5
+  read_timeout: 10000
+  retries: 3
   routes:
   - https_redirect_status_code: 426
-    name: grafana-route
+    name: httpbin-route
     path_handling: v0
     paths:
-    - /grafana
+    - /httpbin
     preserve_host: false
     protocols:
     - http
@@ -68,142 +240,4 @@ services:
     request_buffering: true
     response_buffering: true
     strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
-  enabled: true
-  host: my-harbor-portal.harbor.svc.cluster.local
-  name: harbor
-  port: 80
-  protocol: http
-  read_timeout: 60000
-  retries: 5
-  routes:
-  - https_redirect_status_code: 426
-    name: harbor-route
-    path_handling: v0
-    paths:
-    - /harbor
-    preserve_host: false
-    protocols:
-    - http
-    - https
-    regex_priority: 0
-    request_buffering: true
-    response_buffering: true
-    strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
-  enabled: true
-  host: jenkins.jenkins.svc.cluster.local
-  name: jenkins
-  port: 8080
-  protocol: http
-  read_timeout: 60000
-  retries: 5
-  routes:
-  - https_redirect_status_code: 426
-    name: jenkins-route
-    path_handling: v0
-    paths:
-    - /jenkins
-    preserve_host: false
-    protocols:
-    - http
-    - https
-    regex_priority: 0
-    request_buffering: true
-    response_buffering: true
-    strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
-  enabled: true
-  host: portainer.portainer.svc.cluster.local
-  name: portainer
-  port: 9000
-  protocol: http
-  read_timeout: 60000
-  retries: 5
-  routes:
-  - https_redirect_status_code: 426
-    name: portainer-route
-    path_handling: v0
-    paths:
-    - /portainer
-    preserve_host: false
-    protocols:
-    - http
-    - https
-    regex_priority: 0
-    request_buffering: true
-    response_buffering: true
-    strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
-  enabled: true
-  host: sonarqube-sonarqube.sonarqube.svc.cluster.local
-  name: sonarqube
-  port: 9000
-  protocol: http
-  read_timeout: 60000
-  retries: 5
-  routes:
-  - https_redirect_status_code: 426
-    name: sonarqube-route
-    path_handling: v0
-    paths:
-    - /sonarqube
-    preserve_host: false
-    protocols:
-    - http
-    - https
-    regex_priority: 0
-    request_buffering: true
-    response_buffering: true
-    strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
-  enabled: true
-  host: uptime-kuma.monitoring.svc.cluster.local
-  name: uptime-kuma
-  port: 3001
-  protocol: http
-  read_timeout: 60000
-  retries: 5
-  routes:
-  - https_redirect_status_code: 426
-    name: uptime-kuma-route
-    path_handling: v0
-    paths:
-    - /uptime-kuma
-    preserve_host: false
-    protocols:
-    - http
-    - https
-    regex_priority: 0
-    request_buffering: true
-    response_buffering: true
-    strip_path: true
-  write_timeout: 60000
-- connect_timeout: 60000
-  enabled: true
-  host: vault.default.svc.cluster.local
-  name: vault
-  port: 8200
-  protocol: http
-  read_timeout: 60000
-  retries: 5
-  routes:
-  - https_redirect_status_code: 426
-    name: vault-route
-    path_handling: v0
-    paths:
-    - /vault
-    preserve_host: false
-    protocols:
-    - http
-    - https
-    regex_priority: 0
-    request_buffering: true
-    response_buffering: true
-    strip_path: true
-  write_timeout: 60000
+  write_timeout: 10000
