@@ -422,6 +422,26 @@ controller:
     - workflow-aggregator:608.v67378e9d3db_1
     - git:5.10.1
     - configuration-as-code:2074.va_57f83f7a_10b_
+    - job-dsl:1.90
+    # SonarQube & Code Quality
+    - sonarqube-generic-coverage:2.2.1
+    - sonar:2.17.3
+    # GitOps & Deployment
+    - argocd:2.0.0
+    - github-branch-source:1695.v0b_b_824be5ce5
+    - gitopsoperator:0.0.2
+    # Container & Registry
+    - docker-plugin:1.5.3
+    - docker-build-publish:1.3.2
+    # Additional DevSecOps
+    - credentials:1278.v8ee75d5b_d7ea
+    - credentials-binding:659.v9733d5492b_92
+    - email-ext:2.112
+    - junit:1233.v2d53ff59b_97e
+    - jacoco:3.3.2
+    - pipeline-model-definition:2.2161.vf2a_0c2488ee9
+    - pipeline-stage-view:2.34
+    - timestamper:1.17
 
   # If set to false, Jenkins will download the minimum required version of all dependencies.
   # -- Download the minimum required version or latest version of all dependencies
@@ -464,9 +484,59 @@ controller:
   #  - "new groovy.json.JsonSlurperClassic"
 
   # -- Map of groovy init scripts to be executed during Jenkins controller start
-  initScripts: {}
-  #  test: |-
-  #    print 'adding global pipeline libraries, register properties, bootstrap jobs...'
+  initScripts:
+    seed-init: |-
+      import jenkins.model.Jenkins
+      import hudson.model.FreeStyleProject
+      import javaposse.jobdsl.plugin.ExecuteDslScripts
+      
+      println('Initializing Jenkins with seed job...')
+      
+      def seedJobName = 'seed-job'
+      def seedJobDescription = 'Seed job for bootstrapping CI/CD pipeline'
+      def gitRepo = 'https://github.com/Iceza5k/dev-sec-ops.git'
+      def jobsPath = 'jenkins/demo'
+      def branch = 'main'
+      
+      Jenkins jenkins = Jenkins.getInstance()
+      def existingSeedJob = jenkins.getItemByFullName(seedJobName)
+      
+      if (existingSeedJob == null) {
+        println("Creating seed job: ${seedJobName}")
+        def seedJob = jenkins.createProject(FreeStyleProject.class, seedJobName)
+        seedJob.setDescription(seedJobDescription)
+        
+        // Configure Git SCM
+        def scm = new hudson.plugins.git.GitSCM(
+          [new hudson.plugins.git.UserRemoteConfig(gitRepo)],
+          [new hudson.plugins.git.BranchSpec(branch)],
+          false, [], null, null, []
+        )
+        seedJob.setScm(scm)
+        
+        // Configure Job DSL Builder
+        def jobDslBuilder = new ExecuteDslScripts(
+          targets: "${jobsPath}/*.groovy",
+          usingScriptText: false,
+          sandbox: true,
+          ignoreExisting: false,
+          ignoreFailures: false,
+          unstableOnDeprecation: false,
+          unstableOnWarning: true,
+          removedJobAction: 'DELETE',
+          removedViewAction: 'DELETE',
+          removedConfigFilesAction: 'DELETE',
+          lookupStrategy: 'JENKINS_ROOT'
+        )
+        
+        seedJob.getBuildersList().add(jobDslBuilder)
+        seedJob.save()
+        println("Seed job '${seedJobName}' created successfully")
+      } else {
+        println("Seed job '${seedJobName}' already exists")
+      }
+      
+      println('Jenkins initialization complete')
   # -- Name of the existing ConfigMap that contains init scripts
   initConfigMap:
 
@@ -490,11 +560,16 @@ controller:
   #    keyName: password
 
   # -- List of additional secrets to create and mount
-  additionalSecrets: []
+  additionalSecrets:
+    - name: sonarqube-token
+      value: "squ_replace_with_actual_sonarqube_token"
+    - name: github-token
+      value: "ghp_replace_with_actual_github_token"
+    - name: argocd-token
+      value: "replace_with_actual_argocd_token"
   # ref: https://github.com/jenkinsci/configuration-as-code-plugin/blob/master/docs/features/secrets.adoc#kubernetes-secrets
-  # additionalSecrets:
-  #  - name: nameOfSecret
-  #    value: secretText
+  # Format: name will be prefixed with jenkins-release-name (e.g., jenkins-sonarqube-token)
+  # Use in JCasC as: ${secret-name}
 
   # Generate SecretClaim resources to create Kubernetes secrets from HashiCorp Vault using kube-vault-controller.
   # 'name' is the name of the secret that will be created in Kubernetes. The Jenkins fullname is prepended to this value.
@@ -529,7 +604,31 @@ controller:
     configUrls: []
     # - https://acme.org/jenkins.yaml
     # -- List of Jenkins Config as Code scripts
-    configScripts: {}
+    configScripts:
+      sonarqube-config: |
+        unclassified:
+          sonarglobalsettings:
+            installations:
+            - name: "SonarQube"
+              serverUrl: "http://sonarqube.sonarqube:9000"
+              serverAuthenticationToken: "${sonarqube-token}"
+              mceInstallationName: "SonarQube"
+      docker-config: |
+        unclassified:
+          location:
+            url: "http://jenkins.jenkins:8080"
+          docker:
+            dockerUrl: "unix:///var/run/docker.sock"
+      tools-config: |
+        tool:
+          maven:
+            installations:
+            - name: "Maven 3.9.0"
+              home: "/usr/share/maven"
+          git:
+            installations:
+            - name: "Git"
+              home: "git"
     #  welcome-message: |
     #    jenkins:
     #      systemMessage: Welcome to our CI\CD server. This Jenkins is configured and managed 'as code'.
