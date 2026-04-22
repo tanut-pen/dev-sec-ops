@@ -29,7 +29,7 @@ spec:
       targetRevision: "*"
       helm:
         valueFiles:
-          - $values/jenkins/values.yaml
+          - $values/jenkins/jenkins-values.yaml
     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
