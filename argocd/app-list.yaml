@@ -128,7 +128,7 @@ spec:
       targetRevision: "*"
       helm:
         valueFiles:
-          - $values/defectdojo/values-dojo.yaml
+          - $values/defectdojo/defectdojo-values.yaml
         parameters:
           - name: django.ingress.enabled
             value: "false"

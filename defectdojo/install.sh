@@ -11,3 +11,5 @@ kubectl set env deployment/defectdojo-django \
   DD_SESSION_COOKIE_SECURE=True \
   DD_CSRF_TRUSTED_ORIGINS=http://defectdojo.local \
   -n defectdojo
+
+helm show values defectdojo/defectdojo > defectdojo-values.yaml
