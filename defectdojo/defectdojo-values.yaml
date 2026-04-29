@@ -513,7 +513,9 @@ django:
 initializer:
   run: true
   automountServiceAccountToken: false
-  jobAnnotations: {}
+  jobAnnotations: 
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded,BeforeHookCreation
   podAnnotations: {}
   labels: {}
   # -- A positive integer will keep this Job and Pod deployed for the specified number of seconds, after which they will be removed. For all other values, the Job and Pod will remain deployed.
@@ -548,7 +550,7 @@ initializer:
   # -- staticName defines whether name of the job will be the same (e.g., "defectdojo-initializer")
   # or different every time - generated based on current time (e.g., "defectdojo-initializer-2024-11-11-18-57")
   # This might be handy for ArgoCD deployments
-  staticName: false
+  staticName: true
 
 # -- For more advance options check the bitnami chart documentation: https://github.com/bitnami/charts/tree/main/bitnami/postgresql
 postgresql:
