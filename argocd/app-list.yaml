@@ -62,11 +62,6 @@ spec:
       helm:
         valueFiles:
           - $values/sonarqube/sonarqube-values.yaml
-        parameters:
-          - name: community.enabled
-            value: "true"
-          - name: monitoringPasscode
-            value: "admin123"
     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
