@@ -61,7 +61,7 @@ spec:
       targetRevision: "*"
       helm:
         valueFiles:
-          - $values/sonarqube/values-sonar.yaml
+          - $values/sonarqube/sonarqube-values.yaml
         parameters:
           - name: community.enabled
             value: "true"
