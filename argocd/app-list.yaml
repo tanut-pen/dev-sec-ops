@@ -337,30 +337,30 @@ spec:
 #       - CreateNamespace=true
 ---
 # ── Sealed Secrets (kubeseal) ─────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: sealed-secrets
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  project: default
-  sources:
-    - repoURL: https://bitnami-labs.github.io/sealed-secrets
-      chart: sealed-secrets
-      targetRevision: "*"
-      helm:
-        releaseName: sealed-secrets
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: kube-system
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: sealed-secrets
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   project: default
+#   sources:
+#     - repoURL: https://bitnami-labs.github.io/sealed-secrets
+#       chart: sealed-secrets
+#       targetRevision: "*"
+#       helm:
+#         releaseName: sealed-secrets
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: kube-system
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
 ---
 # ── Kong Gateway ──────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1

@@ -17,3 +17,5 @@ resources:
   limits:
     memory: "2Gi"
     cpu: "1000m"
+
+#helm show values sonarqube/sonarqube > sonarqube-values.yaml

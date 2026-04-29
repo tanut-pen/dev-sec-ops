@@ -31,9 +31,12 @@ The stack in this repo includes:
 ├── CLAUDE.md
 ├── jenkins/
 │   ├── install.sh
-│   ├── values.yaml
+│   ├── jenkins-values.yaml
 │   ├── readme.md
-│   └── Jenkinsfile
+│   └── demo/
+│       ├── Jenkinsfile
+│       ├── jobs.groovy
+│       └── seed-job.groovy
 ├── sonarqube/
 │   ├── install.sh
 │   ├── values-sonar.yaml
@@ -57,7 +60,7 @@ The stack in this repo includes:
 │   └── readme.md
 ├── vault/
 │   ├── install.sh
-│   └── values.yaml
+│   └── vault-values.yaml
 ├── uptime-kuma/
 │   ├── install.sh
 │   ├── values.yaml
@@ -71,7 +74,8 @@ The stack in this repo includes:
 │   └── install.sh
 ├── kong/
 │   ├── install.sh
-│   ├── values.yaml
+│   ├── kong-values.yaml
+│   ├── kong-config.yaml
 │   └── readme.md
 └── lab/
     └── ACME/
@@ -200,8 +204,9 @@ cd vault
 ./install.sh
 ```
 
-- Namespace: `default` (installs to active context namespace)
+- Namespace: `vault`
 - Chart: `hashicorp/vault`
+- Values file: `vault/vault-values.yaml`
 - Run `vault operator init` after install to get the root token and unseal keys
 
 ### 9. Install Uptime Kuma
@@ -274,7 +279,7 @@ cd gitlab
 | Jenkins | `http://localhost:30003` | `jenkins.local` |
 | SonarQube | — | `sonarqube.local` |
 | Harbor | `http://localhost:30002` | `harbor.local` |
-| DefectDojo | — | `defectdojo.local` |
+| DefectDojo | `http://localhost:30001` | `defectdojo.local` |
 | Argo CD | `http://localhost:30004` | `argocd.local` |
 | Grafana | `http://localhost:30005` | `grafana.local` |
 | Uptime Kuma | `http://localhost:30006` | `uptime-kuma.local` |
@@ -309,7 +314,7 @@ See [`CLAUDE.md`](./CLAUDE.md) for a full table of default usernames, passwords,
 
 ## Jenkins Pipeline Overview
 
-The pipeline definition is in `jenkins/Jenkinsfile`.
+The demo pipeline definition is in `jenkins/demo/Jenkinsfile`.
 
 ### Pipeline runtime
 
@@ -350,8 +355,9 @@ https://github.com/docker/getting-started-todo-app.git
 - Sensitive values (passwords, tokens) are stored in plain text in several config files. For production use, move these into Kubernetes Secrets or a secrets manager like Vault.
 - The SonarQube install script uses inline `--set` flags instead of `values-sonar.yaml`.
 - The Jenkins pipeline mounts the host Docker socket — convenient for a lab, not for hardened production.
+- Jenkins artifacts currently use mixed paths/file names (`values.yaml` vs `jenkins-values.yaml`, `jenkins/Jenkinsfile` vs `jenkins/demo/Jenkinsfile`). Align these before running seed jobs.
 - GitLab requires significant resources and external DNS; it is included as a reference install script only.
-- Vault is installed without a namespace flag — run `vault operator init` after deploy and save the unseal keys securely.
+- Vault installs to namespace `vault` and still requires `vault operator init` after deploy; save unseal keys securely.
 
 ## Recommended Startup Order
 
