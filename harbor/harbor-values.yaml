@@ -180,7 +180,7 @@ persistence:
       storageClass: ""
       subPath: ""
       accessMode: ReadWriteOnce
-      size: 5Gi
+      size: 1Gi
       annotations: {}
   # Define which storage backend is used for registry to store
   # images and charts. Refer to
