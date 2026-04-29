@@ -92,7 +92,7 @@ spec:
       helm:
         releaseName: my-harbor
         valueFiles:
-          - $values/harbor/harbor-local.yaml
+          - $values/harbor/harbor-values.yaml
     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
