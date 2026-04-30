@@ -99,6 +99,7 @@ pipeline {
     REGISTRY_PROJECT = 'my-project'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
+    SONAR_ORGANIZATION = 'tanut.pen'
     SONARQUBE_URL = 'https://sonarcloud.io'
     SONARQUBE_ENV = 'sonarqube'
     SONAR_PROJECT_KEY = 'docker-getting-started-todo-app'
@@ -162,6 +163,7 @@ pipeline {
                 -Dsonar.login=$SONAR_TOKEN \
                 -Dsonar.projectKey=$SONAR_PROJECT_KEY \
                 -Dsonar.projectName=$SONAR_PROJECT_NAME \
+                -Dsonar.organization=$SONAR_ORGANIZATION \
                 -Dsonar.projectVersion=$BUILD_NUMBER \
                 -Dsonar.sources=backend,client \
                 -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/** \
