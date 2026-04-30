@@ -12,7 +12,8 @@ pipelineJob('devsecops-demo-pipeline') {
         git {
           remote {
             // Update this URL to your repo before running the job.
-            url('https://github.com/your-org/dev-sec-ops.git')
+            url('https://github.com/tanut-pen/dev-sec-ops.git')
+            credentials('tanut-pen')
           }
           branch('*/main')
         }
