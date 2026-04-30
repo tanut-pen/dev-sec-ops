@@ -47,36 +47,36 @@ spec:
 # ── SonarQube ─────────────────────────────────────────────────────────────────
 # Note: original install.sh uses --set flags (no values file).
 # Using values-sonar.yaml with community edition settings.
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: sonarqube
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://SonarSource.github.io/helm-chart-sonarqube
-      chart: sonarqube
-      targetRevision: "*"
-      helm:
-        valueFiles:
-          - $values/sonarqube/sonarqube-values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: sonarqube
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: sonarqube
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://SonarSource.github.io/helm-chart-sonarqube
+#       chart: sonarqube
+#       targetRevision: "*"
+#       helm:
+#         valueFiles:
+#           - $values/sonarqube/sonarqube-values.yaml
+#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: sonarqube
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
+
 # ── Harbor ────────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
