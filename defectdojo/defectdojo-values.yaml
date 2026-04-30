@@ -666,7 +666,11 @@ valkey:
 # DD_SOCIAL_AUTH_AUTH0_KEY: 'dev'
 # DD_SOCIAL_AUTH_AUTH0_DOMAIN: 'xxxxx'
 # ```
-extraConfigs: {}
+extraConfigs:
+  # Local HTTP lab mode: secure cookies must be disabled or login will loop.
+  DD_CSRF_COOKIE_SECURE: 'False'
+  DD_SESSION_COOKIE_SECURE: 'False'
+  DD_CSRF_TRUSTED_ORIGINS: 'http://defectdojo.local'
 
 # -- Extra secrets can be created inside of extraSecrets block:
 # NOTE  This is just an exmaple, do not store sensitive data in plain text form, better inject it during the deployment/upgrade by --set extraSecrets.secret=someSecret
