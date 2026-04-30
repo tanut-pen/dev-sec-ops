@@ -99,6 +99,7 @@ pipeline {
     REGISTRY_PROJECT = 'my-project'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
+    SONARQUBE_URL = 'https://sonarcloud.io'
     SONARQUBE_ENV = 'sonarqube'
     SONAR_PROJECT_KEY = 'docker-getting-started-todo-app'
     SONAR_PROJECT_NAME = 'docker-getting-started-todo-app'
@@ -108,6 +109,7 @@ pipeline {
     DEFECTDOJO_ENGAGEMENT_ID = '1'
     DEFECTDOJO_PRODUCT_NAME = 'getting-started-todo-app'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
+
   }
 
   stages {
@@ -156,7 +158,7 @@ pipeline {
               
               # Run the scan with the detected Node.js binary.
               sonar-scanner \
-                -Dsonar.host.url=http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000 \
+                -Dsonar.host.url=${SONARQUBE_URL} \
                 -Dsonar.login=$SONAR_TOKEN \
                 -Dsonar.projectKey=$SONAR_PROJECT_KEY \
                 -Dsonar.projectName=$SONAR_PROJECT_NAME \
@@ -167,7 +169,7 @@ pipeline {
                 -Dsonar.nodejs.executable=$NODE_EXEC
 
               # Export SonarQube issues to JSON for DefectDojo import
-              curl -s -u $SONAR_TOKEN: http://sonarqube-sonarqube.sonarqube.svc.cluster.local:9000/api/issues/search?projectKeys=$SONAR_PROJECT_KEY&resolved=false&ps=500 > sonar-report.json
+              curl -s -u $SONAR_TOKEN: ${SONARQUBE_URL}/api/issues/search?projectKeys=$SONAR_PROJECT_KEY&resolved=false&ps=500 > sonar-report.json
             '''
           }
         }
