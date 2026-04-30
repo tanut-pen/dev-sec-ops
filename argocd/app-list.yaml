@@ -129,9 +129,6 @@ spec:
       helm:
         valueFiles:
           - $values/defectdojo/defectdojo-values.yaml
-        parameters:
-          - name: django.ingress.enabled
-            value: "false"
     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
