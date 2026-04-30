@@ -130,16 +130,6 @@ spec:
         valueFiles:
           - $values/defectdojo/defectdojo-values.yaml
         parameters:
-          - name: host
-            value: "defectdojo.local"
-          - name: alternativeHosts[0]
-            value: "defectdojo.local"
-          - name: extraConfigs.DD_CSRF_COOKIE_SECURE
-            value: "False"
-          - name: extraConfigs.DD_SESSION_COOKIE_SECURE
-            value: "False"
-          - name: extraConfigs.DD_CSRF_TRUSTED_ORIGINS
-            value: "http://defectdojo.local"
           - name: django.ingress.enabled
             value: "false"
     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
