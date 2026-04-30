@@ -7,7 +7,7 @@ helm repo update
 helm upgrade --install defectdojo defectdojo/defectdojo \
   --namespace defectdojo \
   --create-namespace \
-  -f values-dojo.yaml \
+  -f defectdojo-values.yaml \
   --set createSecret=true \
   --set createValkeySecret=true \
   --set createPostgresqlSecret=true \

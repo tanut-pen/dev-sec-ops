@@ -92,7 +92,7 @@ networkPolicy:
   annotations: {}
 
 # -- Primary hostname of instance
-host: defectdojo.default.minikube.local
+host: defectdojo.local
 
 # -- The full URL to your defectdojo instance, depends on the domain where DD is deployed, it also affects links in Jira.
 # Use syntax: `siteUrl: 'https://<yourdomain>'`
@@ -101,7 +101,8 @@ siteUrl: "http://defectdojo.local"
 # -- optional list of alternative hostnames to use that gets appended to
 # DD_ALLOWED_HOSTS. This is necessary when your local hostname does not match
 # the global hostname.
-alternativeHosts: []
+alternativeHosts:
+  - defectdojo.local
 #  - defectdojo.example.com
 imagePullPolicy: Always
 # @schema type:[string, null]
