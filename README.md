@@ -132,7 +132,7 @@ cd jenkins
 
 - Namespace: `jenkins`
 - Service type: `NodePort` — port `30003`
-- Admin password: `admin`
+- Admin credentials: set by you for your local lab deployment
 - Persistent volume size: `8Gi`
 
 ### 3. Install SonarQube
@@ -144,7 +144,7 @@ cd sonarqube
 
 - Namespace: `sonarqube`
 - Community edition
-- Monitoring passcode: `admin123`
+- Monitoring passcode: set via your local values/configuration
 - Ingress host: `sonarqube.local`
 
 ### 4. Install Harbor
@@ -193,7 +193,7 @@ cd grafana
 - Namespace: `grafana`
 - Chart: `prometheus-community/kube-prometheus-stack`
 - Grafana service type: `NodePort` — port `30005`
-- Admin password: `admin`
+- Admin credentials: set by you for your local lab deployment
 - Prometheus retention: `7d`
 - Ingress host: `grafana.local`
 
@@ -310,7 +310,7 @@ kubectl apply -f ingress.yaml
 
 ## Credentials Reference
 
-See [`CLAUDE.md`](./CLAUDE.md) for a full table of default usernames, passwords, and tokens for each service.
+Do not commit or publish real credentials. Use local environment variables, Kubernetes Secrets, or Vault for service authentication values.
 
 ## Jenkins Pipeline Overview
 
@@ -339,7 +339,7 @@ https://github.com/docker/getting-started-todo-app.git
 ### Image naming
 
 ```
-10.72.110.5:30002/my-project/getting-started-todo-app:<build-number>
+<harbor-host>:<harbor-port>/my-project/getting-started-todo-app:<build-number>
 ```
 
 ### Jenkins credentials required
@@ -352,7 +352,8 @@ https://github.com/docker/getting-started-todo-app.git
 
 ## Notes and Limitations
 
-- Sensitive values (passwords, tokens) are stored in plain text in several config files. For production use, move these into Kubernetes Secrets or a secrets manager like Vault.
+- This repository is intentionally scoped as a local lab and portfolio demo, not a production-hardened platform.
+- Any sensitive values used during local testing should be injected at deploy/runtime (Kubernetes Secrets, Vault, or CI secret stores), not committed to source control.
 - The SonarQube install script uses inline `--set` flags instead of `values-sonar.yaml`.
 - The Jenkins pipeline mounts the host Docker socket — convenient for a lab, not for hardened production.
 - Jenkins artifacts currently use mixed paths/file names (`values.yaml` vs `jenkins-values.yaml`, `jenkins/Jenkinsfile` vs `jenkins/demo/Jenkinsfile`). Align these before running seed jobs.

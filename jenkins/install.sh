@@ -1,5 +1,10 @@
-helm upgrade --install jenkins jenkins/jenkins -n jenkins --create-namespace -f values.yaml
+#!/usr/bin/env bash
+set -euo pipefail
 
-zVNaZPZRM3fH8zLOZv2nub
+helm repo add jenkins https://charts.jenkins.io --force-update
+helm repo update
 
-helm show values jenkins/jenkins > values.yaml
+helm upgrade --install jenkins jenkins/jenkins \
+  --namespace jenkins \
+  --create-namespace \
+  -f jenkins-values.yaml
