@@ -365,7 +365,7 @@ django:
   ingress:
     enabled: true
     ingressClassName: ""
-    activateTLS: true
+    activateTLS: false
     secretName: defectdojo-tls
     # -- Restricts the type of ingress controller that can interact with our chart (nginx, traefik, ...)
     # `kubernetes.io/ingress.class: nginx`
@@ -485,13 +485,7 @@ django:
       certFileName: ca.crt
 
   # -- Additional environment variables injected to all Django containers and initContainers.
-  extraEnv:
-    - name: DD_CSRF_COOKIE_SECURE
-      value: "False"
-    - name: DD_SESSION_COOKIE_SECURE
-      value: "False"
-    - name: DD_CSRF_TRUSTED_ORIGINS
-      value: "http://defectdojo.local"
+  extraEnv: []
   # -- A list of additional initContainers to run before the uwsgi and nginx containers.
   extraInitContainers: []
   # -- Array of additional volume mount points common to all containers and initContainers.
@@ -672,7 +666,8 @@ valkey:
 # DD_SOCIAL_AUTH_AUTH0_KEY: 'dev'
 # DD_SOCIAL_AUTH_AUTH0_DOMAIN: 'xxxxx'
 # ```
-extraConfigs: {}
+extraConfigs:
+  DD_CSRF_TRUSTED_ORIGINS: 'http://defectdojo.local'
 
 # -- Extra secrets can be created inside of extraSecrets block:
 # NOTE  This is just an exmaple, do not store sensitive data in plain text form, better inject it during the deployment/upgrade by --set extraSecrets.secret=someSecret
