@@ -418,6 +418,7 @@ controller:
   # Plugins will be installed during Jenkins controller start
   # -- List of Jenkins plugins to install. If you don't want to install plugins, set it to `false`
   installPlugins:
+    - job-dsl:3654.vdf58f53e2d15
     - kubernetes:4423.vb_59f230b_ce53
     - workflow-aggregator:608.v67378e9d3db_1
     - git:5.10.1
@@ -983,7 +984,7 @@ agent:
 
   # For connecting to the Jenkins controller
   # -- Overrides the Kubernetes Jenkins URL
-  jenkinsUrl:
+  jenkinsUrl: "http://jenkins.local/"
 
   # connects to the specified host and port, instead of connecting directly to the Jenkins controller
   # -- Overrides the Kubernetes Jenkins tunnel
