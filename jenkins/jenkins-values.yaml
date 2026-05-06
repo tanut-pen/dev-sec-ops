@@ -180,7 +180,7 @@ controller:
   jenkinsUrlProtocol:
 
   # -- Set Jenkins URL if you are not using the ingress definitions provided by the chart
-  jenkinsUrl:
+  jenkinsUrl: "http://jenkins.local/"
 
   # If you set this prefix and use ingress controller, then you might want to set the ingress path below
   # I.e., "/jenkins"
@@ -1433,4 +1433,3 @@ helmtest:
       repository: "bats/bats"
       # -- Tag of the image to test the framework
       tag: "1.13.0"
-
