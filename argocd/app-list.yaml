@@ -13,6 +13,60 @@
 #   - prune: true (keep resources if removed from values — safer for stateful apps)
 # ──────────────────────────────────────────────────────────────────────────────
 
+# ── Nginx SIT ─────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-sit
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+    app.kubernetes.io/name: nginx
+    environment: sit
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    targetRevision: HEAD
+    path: nginx/overlays/sit
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-sit
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Nginx UAT ─────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: nginx-uat
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+    app.kubernetes.io/name: nginx
+    environment: uat
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    targetRevision: HEAD
+    path: nginx/overlays/uat
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: nginx-uat
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
 # ── Jenkins ───────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application

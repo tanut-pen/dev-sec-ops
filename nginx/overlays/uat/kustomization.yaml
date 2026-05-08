@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: nginx-uat
+nameSuffix: -uat
+resources:
+  - namespace.yaml
+  - ../../base
+patches:
+  - path: resources-patch.yaml
+    target:
+      kind: Deployment
+      name: nginx
