@@ -582,3 +582,29 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+---
+# ── Kong ConfigMap ───────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kong-configmap
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    targetRevision: HEAD
+    path: kong/configmap
+    directory:
+      recurse: true
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kong
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

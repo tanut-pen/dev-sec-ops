@@ -527,7 +527,7 @@ migrations:
 # and not as an Ingress Controller.
 dblessConfig:
   # Either Kong's configuration is managed from an existing ConfigMap (with Key: kong.yml)
-  configMap: ""
+  configMap: "kong-dbless-config"
   # Or Kong's configuration is managed from an existing Secret (with Key: kong.yml)
   secret: ""
   # Or the configuration is passed in full-text below

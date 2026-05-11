@@ -1,21 +1,10 @@
-#!/usr/bin/env bash
-set -euo pipefail
+#install
+istioctl install --set profile=demo -y
 
-helm repo add istio https://istio-release.storage.googleapis.com/charts --force-update
-helm repo update
+#label the demo namespace for automatic sidecar injection
+kubectl label namespace demo istio-injection=enabled
+kubectl label namespace kong istio-injection=enabled
 
-helm upgrade --install istio-base istio/base \
-  --namespace istio-system \
-  --create-namespace \
-  --wait \
-  -f base-values.yaml
-
-helm upgrade --install istiod istio/istiod \
-  --namespace istio-system \
-  --wait \
-  -f istiod-values.yaml
-
-helm upgrade --install istio-ingress istio/gateway \
-  --namespace istio-ingress \
-  --create-namespace \
-  -f gateway-values.yaml
+#uninstall
+istioctl uninstall --purge -y
+kubectl label namespace demo istio-injection-
