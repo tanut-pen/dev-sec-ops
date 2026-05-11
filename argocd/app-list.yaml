@@ -27,7 +27,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
     path: nginx/overlays/sit
   destination:
@@ -54,7 +54,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
     path: nginx/overlays/uat
   destination:
@@ -85,7 +85,7 @@ spec:
       helm:
         valueFiles:
           - $values/jenkins/jenkins-values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -118,7 +118,7 @@ spec:
 #       helm:
 #         valueFiles:
 #           - $values/sonarqube/sonarqube-values.yaml
-#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
 #   destination:
@@ -150,7 +150,7 @@ spec:
         releaseName: my-harbor
         valueFiles:
           - $values/harbor/harbor-values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -183,7 +183,7 @@ spec:
       helm:
         valueFiles:
           - $values/defectdojo/defectdojo-values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -216,7 +216,7 @@ spec:
         releaseName: argocd
         valueFiles:
           - $values/argocd/values-argocd.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -248,7 +248,7 @@ spec:
         releaseName: argo-rollouts
         valueFiles:
           - $values/argocd/values-rollouts.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -280,7 +280,7 @@ spec:
 #         valueFiles:
 #           - $values/grafana/values-grafana.yaml
 #         skipCrds: false
-#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
 #   destination:
@@ -293,6 +293,38 @@ spec:
 #     syncOptions:
 #       - CreateNamespace=true
 #       - ServerSideApply=true   # needed for large CRDs in kube-prometheus-stack
+---
+# ── Grafana Alloy ─────────────────────────────────────────────────────────────
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: grafana-alloy
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://grafana.github.io/helm-charts
+#       chart: alloy
+#       targetRevision: "*"
+#       helm:
+#         releaseName: grafana-alloy
+#         valueFiles:
+#           - $values/grafana-alloy/values.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: grafana-alloy
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
 ---
 # ── Vault ─────────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
@@ -313,7 +345,7 @@ spec:
         releaseName: vault
         valueFiles:
           - $values/vault/vault-values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -344,7 +376,7 @@ spec:
         releaseName: uptime-kuma
         valueFiles:
           - $values/uptime-kuma/values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -375,7 +407,7 @@ spec:
 #         releaseName: portainer
 #         valueFiles:
 #           - $values/portainer/values.yaml
-#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
 #   destination:
@@ -432,7 +464,7 @@ spec:
         releaseName: kong
         valueFiles:
           - $values/kong/kong-values.yaml
-    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:

@@ -35,6 +35,7 @@ helm repo add harbor       https://helm.goharbor.io
 helm repo add defectdojo   https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
 helm repo add argo          https://argoproj.github.io/argo-helm
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo add grafana       https://grafana.github.io/helm-charts
 helm repo add hashicorp    https://helm.releases.hashicorp.com
 helm repo add uptime-kuma  https://helm.irsigler.cloud
 helm repo add kong         https://charts.konghq.com

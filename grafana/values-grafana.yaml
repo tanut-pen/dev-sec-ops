@@ -10,6 +10,7 @@ grafana:
 
 prometheus:
   prometheusSpec:
+    enableRemoteWriteReceiver: true
     retention: 7d
     storageSpec:
       volumeClaimTemplate:

@@ -12,6 +12,7 @@ The stack in this repo includes:
 - `DefectDojo` for vulnerability report import and tracking
 - `Argo CD` for GitOps-style delivery
 - `Grafana Stack` for monitoring, dashboards, and alerting
+- `Grafana Alloy` for telemetry collection pipelines
 - `Trivy` for container image scanning
 - `Vault` for secrets management
 - `Uptime Kuma` for uptime monitoring
@@ -57,6 +58,10 @@ The stack in this repo includes:
 ├── grafana/
 │   ├── install.sh
 │   ├── values-grafana.yaml
+│   └── readme.md
+├── grafana-alloy/
+│   ├── install.sh
+│   ├── values.yaml
 │   └── readme.md
 ├── vault/
 │   ├── install.sh
@@ -197,7 +202,19 @@ cd grafana
 - Prometheus retention: `7d`
 - Ingress host: `grafana.local`
 
-### 8. Install Vault
+### 8. Install Grafana Alloy
+
+```bash
+cd grafana-alloy
+./install.sh
+```
+
+- Namespace: `grafana-alloy`
+- Chart: `grafana/alloy`
+- Controller: `DaemonSet`
+- Sends Alloy self metrics to the local Prometheus remote write endpoint
+
+### 9. Install Vault
 
 ```bash
 cd vault
@@ -209,7 +226,7 @@ cd vault
 - Values file: `vault/vault-values.yaml`
 - Run `vault operator init` after install to get the root token and unseal keys
 
-### 9. Install Uptime Kuma
+### 10. Install Uptime Kuma
 
 ```bash
 cd uptime-kuma
