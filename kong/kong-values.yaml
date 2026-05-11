@@ -527,7 +527,7 @@ migrations:
 # and not as an Ingress Controller.
 dblessConfig:
   # Either Kong's configuration is managed from an existing ConfigMap (with Key: kong.yml)
-  configMap: "kong-dbless-config"
+  configMap: ""
   # Or Kong's configuration is managed from an existing Secret (with Key: kong.yml)
   secret: ""
   # Or the configuration is passed in full-text below
@@ -1371,7 +1371,9 @@ clustertelemetry:
     # Each path in an Ingress is required to have a corresponding path type. (ImplementationSpecific/Exact/Prefix)
     pathType: ImplementationSpecific
 
-extraConfigMaps: []
+extraConfigMaps:
+- name: kong-dbless-config
+  mountPath: /etc/kong/
 # extraConfigMaps:
 # - name: my-config-map
 #   mountPath: /mount/to/my/location
