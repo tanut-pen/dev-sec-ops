@@ -11,6 +11,7 @@ The stack in this repo includes:
 - `Harbor` for container image storage
 - `DefectDojo` for vulnerability report import and tracking
 - `Argo CD` for GitOps-style delivery
+- `Istio` for service mesh traffic management
 - `Grafana Stack` for monitoring, dashboards, and alerting
 - `Grafana Alloy` for telemetry collection pipelines
 - `Trivy` for container image scanning
@@ -54,6 +55,12 @@ The stack in this repo includes:
 │   ├── install.sh
 │   ├── values-argocd.yaml
 │   ├── values-rollouts.yaml
+│   └── readme.md
+├── istio/
+│   ├── install.sh
+│   ├── base-values.yaml
+│   ├── istiod-values.yaml
+│   ├── gateway-values.yaml
 │   └── readme.md
 ├── grafana/
 │   ├── install.sh
@@ -188,7 +195,21 @@ cd argocd
 - Server runs in insecure mode for local ingress compatibility
 - Also installs Argo Rollouts in namespace `argo-rollouts`
 
-### 7. Install Grafana Stack
+### 7. Install Istio
+
+```bash
+cd istio
+./install.sh
+```
+
+- Base/control plane namespace: `istio-system`
+- Ingress gateway namespace: `istio-ingress`
+- Charts: `istio/base`, `istio/istiod`, `istio/gateway`
+- Ingress gateway service type: `NodePort`
+- HTTP NodePort: `30080`
+- HTTPS NodePort: `30443`
+
+### 8. Install Grafana Stack
 
 ```bash
 cd grafana
@@ -202,7 +223,7 @@ cd grafana
 - Prometheus retention: `7d`
 - Ingress host: `grafana.local`
 
-### 8. Install Grafana Alloy
+### 9. Install Grafana Alloy
 
 ```bash
 cd grafana-alloy
@@ -214,7 +235,7 @@ cd grafana-alloy
 - Controller: `DaemonSet`
 - Sends Alloy self metrics to the local Prometheus remote write endpoint
 
-### 9. Install Vault
+### 10. Install Vault
 
 ```bash
 cd vault
@@ -226,7 +247,7 @@ cd vault
 - Values file: `vault/vault-values.yaml`
 - Run `vault operator init` after install to get the root token and unseal keys
 
-### 10. Install Uptime Kuma
+### 11. Install Uptime Kuma
 
 ```bash
 cd uptime-kuma
@@ -239,7 +260,7 @@ cd uptime-kuma
 - 4Gi persistent volume
 - Set credentials on first login
 
-### 10. Install Portainer
+### 12. Install Portainer
 
 ```bash
 cd portainer
@@ -252,7 +273,7 @@ cd portainer
 - HTTPS NodePort: `30779`
 - 10Gi persistent volume
 
-### 11. Install Kubeseal (Sealed Secrets)
+### 13. Install Kubeseal (Sealed Secrets)
 
 ```bash
 cd kubeseal
@@ -263,7 +284,7 @@ cd kubeseal
 - Chart: `sealed-secrets/sealed-secrets` from `bitnami-labs.github.io`
 - Installs the controller; use the `kubeseal` CLI to encrypt secrets
 
-### 12. Install Kong Gateway
+### 14. Install Kong Gateway
 
 ```bash
 cd kong
@@ -278,7 +299,7 @@ cd kong
 - HTTPS Proxy NodePort: `30009` → `https://localhost:30009`
 - Kubernetes Ingress Controller enabled (uses `ingressClassName: kong`)
 
-### 13. Install GitLab *(optional)*
+### 15. Install GitLab *(optional)*
 
 ```bash
 cd gitlab

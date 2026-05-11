@@ -261,6 +261,112 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
+# ── Istio Base ────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: istio-base
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "10"
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+    app.kubernetes.io/name: istio
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: https://istio-release.storage.googleapis.com/charts
+      chart: base
+      targetRevision: "*"
+      helm:
+        releaseName: istio-base
+        valueFiles:
+          - $values/istio/base-values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true
+---
+# ── Istio Control Plane ───────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: istiod
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "11"
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+    app.kubernetes.io/name: istio
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: https://istio-release.storage.googleapis.com/charts
+      chart: istiod
+      targetRevision: "*"
+      helm:
+        releaseName: istiod
+        valueFiles:
+          - $values/istio/istiod-values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-system
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
+# ── Istio Ingress Gateway ─────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: istio-ingress
+  namespace: argocd
+  annotations:
+    argocd.argoproj.io/sync-wave: "12"
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+    app.kubernetes.io/name: istio
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: https://istio-release.storage.googleapis.com/charts
+      chart: gateway
+      targetRevision: "*"
+      helm:
+        releaseName: istio-ingress
+        valueFiles:
+          - $values/istio/gateway-values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: istio-ingress
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
 # ── Grafana (kube-prometheus-stack) ───────────────────────────────────────────
 # apiVersion: argoproj.io/v1alpha1
 # kind: Application
