@@ -19,24 +19,6 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: sonar-ingress
-  namespace: sonarqube
-spec:
-  rules:
-  - host: sonarqube.local
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: sonarqube-sonarqube
-            port:
-              number: 9000
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: argocd-ingress
   namespace: argocd
 spec:
