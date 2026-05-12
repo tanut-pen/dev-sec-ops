@@ -25,7 +25,9 @@ playbookRepos: {}
 #       - start_date: "2026-01-01 00:00"
 #         end_date: "2026-01-01 23:59"
 #         timezone: US/Eastern
-sinksConfig: []
+sinksConfig:
+  - robusta_sink:
+      name: internal_sink
 
 # global parameters
 clusterName: "rancher-desktop"
