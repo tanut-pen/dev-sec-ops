@@ -28,6 +28,7 @@ playbookRepos: {}
 sinksConfig:
   - robusta_sink:
       name: internal_sink
+      token: "dummy-token"
 
 # global parameters
 clusterName: "rancher-desktop"
@@ -195,7 +196,7 @@ priorityBuiltinPlaybooks:
 customPlaybooks:
   - triggers:
       - on_pod_crash_loop:
-          include: [jenkins-0]
+          include: "jenkins-0"
     actions:
       - pod_logs_enricher: {}
       - delete_pod: {}
