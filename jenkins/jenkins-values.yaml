@@ -441,7 +441,7 @@ controller:
   # Without this; whenever the controller gets restarted (Evicted, etc.) it will fetch plugin updates that have the potential to cause breakage.
   # Note that for this to work, `persistence.enabled` needs to be set to `true`
   # -- Initialize only on first installation. Ensures plugins do not get updated inadvertently. Requires `persistence.enabled` to be set to `true`
-  initializeOnce: false
+  initializeOnce: true
 
   # Enable to always override the installed plugins with the values of 'controller.installPlugins' on upgrade or redeployment.
   # -- Overwrite installed plugins on start
@@ -633,9 +633,11 @@ controller:
       # -- Environment variable sources for the Jenkins Config as Code auto-reload container
       envFrom: []
       # -- Environment variables for the Jenkins Config as Code auto-reload container
-      env: []
-      #   - name: REQ_TIMEOUT
-      #     value: "30"
+      env:
+        - name: REQ_RETRY_CONNECT
+          value: "10" 
+        - name: REQ_TIMEOUT
+          value: "30"
 
       # SSH port value can be set to any unused TCP port. The default, 1044, is a non-standard SSH port that has been chosen at random.
       # This is only used to reload JCasC config from the sidecar container running in the Jenkins controller pod.
