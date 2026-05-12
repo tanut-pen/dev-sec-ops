@@ -28,11 +28,11 @@ playbookRepos: {}
 sinksConfig: []
 
 # global parameters
-clusterName: ""
+clusterName: "rancher-desktop"
 clusterZone: ""
 
 global:
-  clusterDomain: "cluster.local"
+  clusterDomain: "kubernetes.default.svc"
 
 automountServiceAccountToken: true
 
@@ -190,7 +190,13 @@ priorityBuiltinPlaybooks:
   - target_down_dns_silencer: {}
 
 # custom user playbooks
-customPlaybooks: []
+customPlaybooks:
+  - triggers:
+      - on_pod_crash_loop:
+          include: [jenkins-0]
+    actions:
+      - pod_logs_enricher: {}
+      - delete_pod: {}
 
 # load custom playbooks by name, which allows overriding them when using multiple Helm values files - learn more https://docs.robusta.dev/master/playbook-reference/defining-playbooks/playbook-basics.html#organizing-playbooks
 namedCustomPlaybooks: {}
