@@ -368,7 +368,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: static/ingress
+    path: static
     directory:
       recurse: true
   destination:
