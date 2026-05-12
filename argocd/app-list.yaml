@@ -261,177 +261,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-# ── Istio Base ────────────────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: istio-base
-#   namespace: argocd
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "10"
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-#     app.kubernetes.io/name: istio
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://istio-release.storage.googleapis.com/charts
-#       chart: base
-#       targetRevision: "*"
-#       helm:
-#         releaseName: istio-base
-#         valueFiles:
-#           - $values/istio/base-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: istio-system
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
-#       - ServerSideApply=true
----
-# ── Istio Control Plane ───────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: istiod
-#   namespace: argocd
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "11"
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-#     app.kubernetes.io/name: istio
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://istio-release.storage.googleapis.com/charts
-#       chart: istiod
-#       targetRevision: "*"
-#       helm:
-#         releaseName: istiod
-#         valueFiles:
-#           - $values/istio/istiod-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: istio-system
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
----
-# ── Istio Ingress Gateway ─────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: istio-ingress
-#   namespace: argocd
-#   annotations:
-#     argocd.argoproj.io/sync-wave: "12"
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-#     app.kubernetes.io/name: istio
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://istio-release.storage.googleapis.com/charts
-#       chart: gateway
-#       targetRevision: "*"
-#       helm:
-#         releaseName: istio-ingress
-#         valueFiles:
-#           - $values/istio/gateway-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: istio-ingress
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
----
-# ── Grafana (kube-prometheus-stack) ───────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: grafana
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   project: default
-#   sources:
-#     - repoURL: https://prometheus-community.github.io/helm-charts
-#       chart: kube-prometheus-stack
-#       targetRevision: "*"
-#       helm:
-#         releaseName: grafana
-#         valueFiles:
-#           - $values/grafana/values-grafana.yaml
-#         skipCrds: false
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: grafana
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
-#       - ServerSideApply=true   # needed for large CRDs in kube-prometheus-stack
----
-# ── Grafana Alloy ─────────────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: grafana-alloy
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://grafana.github.io/helm-charts
-#       chart: alloy
-#       targetRevision: "*"
-#       helm:
-#         releaseName: grafana-alloy
-#         valueFiles:
-#           - $values/grafana-alloy/values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: grafana-alloy
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
----
 # ── Vault ─────────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -495,63 +324,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-# ── Portainer ─────────────────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: portainer
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   project: default
-#   sources:
-#     - repoURL: https://portainer.github.io/k8s/
-#       chart: portainer
-#       targetRevision: "*"
-#       helm:
-#         releaseName: portainer
-#         valueFiles:
-#           - $values/portainer/values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: portainer
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
----
-# ── Sealed Secrets (kubeseal) ─────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: sealed-secrets
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   project: default
-#   sources:
-#     - repoURL: https://bitnami-labs.github.io/sealed-secrets
-#       chart: sealed-secrets
-#       targetRevision: "*"
-#       helm:
-#         releaseName: sealed-secrets
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: kube-system
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
----
 # ── Kong Gateway ──────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -583,11 +355,11 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-# ── Kong Ingress ───────────────────────────────────────────────────────────
+# ── Kong Ingress ─────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: static-kong-manifests
+  name: kong-ingress
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: devsecops-lab
@@ -596,47 +368,12 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: static/kong
+    path: static/ingress
     directory:
       recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: kong
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
-# ── Kong Ingress ───────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: static-manifests
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  project: default
-  source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-    targetRevision: HEAD
-    path: static
-    directory:
-      recurse: true
-  destination:
-    - server: https://kubernetes.default.svc
-      namespace: kong
-    - server: https://kubernetes.default.svc
-      namespace: jenkins
-    - server: https://kubernetes.default.svc
-      namespace: sonarqube
-    - server: https://kubernetes.default.svc
-      namespace: argocd
-    - server: https://kubernetes.default.svc
-      namespace: harbor
-    - server: https://kubernetes.default.svc
-      namespace: defectdojo
   syncPolicy:
     automated:
       selfHeal: true
