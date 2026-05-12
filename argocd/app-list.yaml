@@ -583,11 +583,11 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-# ── Kong ConfigMap ───────────────────────────────────────────────────────────
+# ── Kong Ingress ───────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kong-configmap
+  name: static-kong-manifests
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: devsecops-lab
@@ -596,12 +596,47 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: kong/configmap
+    path: static/kong
     directory:
       recurse: true
   destination:
     server: https://kubernetes.default.svc
     namespace: kong
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+# ── Kong Ingress ───────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: static-manifests
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    targetRevision: HEAD
+    path: static
+    directory:
+      recurse: true
+  destination:
+    - server: https://kubernetes.default.svc
+      namespace: kong
+    - server: https://kubernetes.default.svc
+      namespace: jenkins
+    - server: https://kubernetes.default.svc
+      namespace: sonarqube
+    - server: https://kubernetes.default.svc
+      namespace: argocd
+    - server: https://kubernetes.default.svc
+      namespace: harbor
+    - server: https://kubernetes.default.svc
+      namespace: defectdojo
   syncPolicy:
     automated:
       selfHeal: true

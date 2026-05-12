@@ -148,7 +148,7 @@ curl -X POST http://localhost:31313/config \
 deck gateway diff kong-config.yaml --kong-addr http://localhost:31313
 
 # Dump current live config to file
-deck gateway dump -o kong-config-new.yaml --kong-addr http://localhost:31313
+deck gateway dump -o kong-config.yaml --kong-addr http://localhost:31313
 
 # Wipe all config (reset)
 curl -X POST http://localhost:31313/config \
