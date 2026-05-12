@@ -285,7 +285,7 @@ cluster:
 proxy:
   # Enable creating a Kubernetes service for the proxy
   enabled: true
-  type: NodePort
+  type: ClusterIP
   loadBalancerClass: ""
   ipFamilyPolicy:
   ipFamilies: []

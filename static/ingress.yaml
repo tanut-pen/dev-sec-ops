@@ -69,3 +69,21 @@ spec:
             name: defectdojo-django
             port:
               number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kong-proxy-ingress
+  namespace: kong
+spec:
+  rules:
+  - host: api.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kong-kong-proxy
+            port:
+              number: 80

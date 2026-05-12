@@ -57,6 +57,39 @@ helm upgrade --install istio-ingress istio/gateway \
   -f gateway-values.yaml
 ```
 
+### Install Kiali
+
+From this folder:
+
+```bash
+./Kiali.sh
+```
+
+Or install Kiali and the Istio Prometheus addon manually:
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.21/samples/addons/prometheus.yaml
+kubectl apply -f https://raw.githubusercontent.com/istio/istio/release-1.21/samples/addons/kiali.yaml
+```
+
+### Start the Kiali Dashboard
+
+Kiali is installed into the `istio-system` namespace and exposes a ClusterIP service.
+
+Run this port-forward command from your local machine:
+
+```bash
+kubectl -n istio-system port-forward svc/kiali 20001:20001
+```
+
+Then open the dashboard in your browser:
+
+```text
+http://localhost:20001/
+```
+
+If you need to access Kiali without port forwarding, create an ingress or NodePort service for `svc/kiali` in the `istio-system` namespace.
+
 ### Current Settings In This Repo
 
 - Base namespace: `istio-system`
