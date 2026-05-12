@@ -207,6 +207,7 @@ metadata:
   labels:
     app.kubernetes.io/part-of: devsecops-lab
 spec:
+  revisionHistoryLimit: 3
   project: default
   sources:
     - repoURL: https://argoproj.github.io/argo-helm
@@ -302,6 +303,7 @@ metadata:
   labels:
     app.kubernetes.io/part-of: devsecops-lab
 spec:
+  revisionHistoryLimit: 3
   project: default
   sources:
     - repoURL: https://helm.irsigler.cloud
@@ -333,6 +335,7 @@ metadata:
   labels:
     app.kubernetes.io/part-of: devsecops-lab
 spec:
+  revisionHistoryLimit: 3
   project: default
   sources:
     - repoURL: https://charts.konghq.com
@@ -364,6 +367,7 @@ metadata:
   labels:
     app.kubernetes.io/part-of: devsecops-lab
 spec:
+  revisionHistoryLimit: 3
   project: default
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
