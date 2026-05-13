@@ -67,38 +67,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-#--- robusta ─────────────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: robusta
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://robusta-charts.storage.googleapis.com
-      chart: robusta
-      targetRevision: "*"
-      helm:
-        releaseName: robusta
-        valueFiles:
-          - $values/robusta/robusta-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: robusta
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
 # ── Jenkins ───────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
