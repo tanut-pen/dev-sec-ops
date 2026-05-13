@@ -5,7 +5,7 @@ metadata:
   namespace: jenkins
 spec:
   rules:
-  - host: jenkins.local
+  - host: jenkins.tpinf.xyz
     http:
       paths:
       - path: /
