@@ -358,11 +358,11 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-# ── Kong Ingress ─────────────────────────────────────────────────────────────
+# ── Static Manifests ─────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: kong-ingress
+  name: static-manifest
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: devsecops-lab
@@ -377,7 +377,7 @@ spec:
       recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: kong
+    namespace: '*'
   syncPolicy:
     automated:
       selfHeal: true
