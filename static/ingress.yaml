@@ -22,6 +22,7 @@ metadata:
   name: argocd-ingress
   namespace: argocd
 spec:
+  ingressClassName: istio
   rules:
   - host: argocd.local
     http:
@@ -58,6 +59,7 @@ metadata:
   name: defectdojo-ingress
   namespace: defectdojo
 spec:
+  ingressClassName: istio
   rules:
   - host: defectdojo.local
     http:
