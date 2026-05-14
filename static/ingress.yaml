@@ -4,6 +4,7 @@ metadata:
   name: jenkins-ingress
   namespace: jenkins
 spec:
+  ingressClassName: istio
   rules:
   - host: jenkins.tpinf.xyz
     http:
@@ -41,6 +42,7 @@ metadata:
   name: harbor-ingress
   namespace: harbor
 spec:
+  ingressClassName: istio
   rules:
   - host: harbor.local
     http:
@@ -78,6 +80,7 @@ metadata:
   name: kong-proxy-ingress
   namespace: kong
 spec:
+  ingressClassName: istio
   rules:
   - host: api.tpinf.xyz
     http:
