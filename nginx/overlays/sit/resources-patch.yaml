@@ -7,7 +7,6 @@ spec:
     spec:
       containers:
         - name: nginx
-          image: nginx:stable-alpine3.23-perl
           resources:
             requests:
               cpu: 256m
