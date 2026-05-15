@@ -21,12 +21,30 @@ spec:
       - name: litellm
         image: harbor.local:30002/my-project/litellm:v1
         imagePullPolicy: Always
-        
+        args:
+        - "--config"
+        - "/app/config.yaml"
         ports:
         - containerPort: 4000
+        volumeMounts:
+        - name: litellm-config-volume
+          mountPath: /app/config.yaml
+          subPath: config.yaml
         env:
         - name: DATABASE_URL
-          value: "postgresql://admin:admin@postgres-postgresql.postgres.svc.cluster.local:5432/postgres"
+          valueFrom:
+            secretKeyRef:
+              name: litellm-secret
+              key: DATABASE_URL
+        - name: LITELLM_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: litellm-secret
+              key: LITELLM_MASTER_KEY
+      volumes:
+      - name: litellm-config-volume
+        configMap:
+          name: litellm-config
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,28 @@
+general_settings:
+  store_model_in_db: true
+
+model_list:
+  - model_name: llama3        # name you call it by
+    litellm_params:
+      model: ollama/llama3
+      api_base: http://ollama:11434
+
+  - model_name: mistral
+    litellm_params:
+      model: ollama/mistral
+      api_base: http://ollama:11434
+
+mcp_servers:
+  kube_mcp:
+    transport: "stdio"
+    command: "npx"
+    args: ["-y", "kubernetes-mcp-server@latest"]
+    env:
+      KUBECONFIG: "/root/.kube/backup/nonprod-cicd-vayu"  # path to your kubeconfig
+  jenkins_mcp:
+    transport: "sse"
+    # Ensure this matches the actual Jenkins MCP Plugin endpoint
+    url: "http://jenkins.local:8080/mcp-server/sse"
+    headers:
+      # Inject credentials securely via OS environment variables
+      Authorization: "os.environ/JENKINS_BASIC_AUTH"
