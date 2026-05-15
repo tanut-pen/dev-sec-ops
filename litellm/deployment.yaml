@@ -19,7 +19,7 @@ spec:
       - name: regcred
       containers:
       - name: litellm
-        image: harbor.local:30002/my-project/litellm:v1
+        image: docker.litellm.ai/berriai/litellm:main-latest
         imagePullPolicy: Always
         args:
         - "--config"
