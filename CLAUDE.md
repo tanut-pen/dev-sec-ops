@@ -17,6 +17,8 @@
 | Vault | — | root | *(see init output)* |
 | Kong Admin API | http://localhost:30007 | — | *(no auth by default)* |
 | Kong Proxy (HTTP) | http://localhost:30008 | — | — |
+| Postgres | postgresql://localhost:30432 | admin | admin |
+| LiteLLM | http://localhost:30433 | — | — |
 
 ## Jenkins Credentials (stored in Jenkins)
 

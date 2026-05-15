@@ -1,0 +1,16 @@
+global:
+  postgresql:
+    auth:
+      postgresPassword: "admin"
+      username: "admin"
+      password: "admin"
+      database: "postgres"
+
+primary:
+  persistence:
+    enabled: true
+    size: 8Gi
+  service:
+    type: NodePort
+    nodePorts:
+      postgresql: 30432

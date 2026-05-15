@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: litellm
+  labels:
+    app: litellm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+      - name: litellm
+        image: harbor.local:30002/my-project/litellm:v1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 4000
+        env:
+        - name: DATABASE_URL
+          value: "postgresql://admin:admin@postgres-postgresql.postgres.svc.cluster.local:5432/postgres"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: litellm
+spec:
+  type: NodePort
+  selector:
+    app: litellm
+  ports:
+    - protocol: TCP
+      port: 4000
+      targetPort: 4000
+      nodePort: 30433

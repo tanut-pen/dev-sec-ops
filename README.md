@@ -21,6 +21,8 @@ The stack in this repo includes:
 - `Kubeseal` (Sealed Secrets) for encrypted Kubernetes secrets
 - `Kong Gateway` as an API gateway and Kubernetes Ingress controller
 - `GitLab` as an optional self-hosted Git server
+- `Postgres` for database services
+- `LiteLLM` for AI model routing and proxying
 
 ## Project Structure
 
@@ -88,6 +90,14 @@ The stack in this repo includes:
 │   ├── install.sh
 │   ├── kong-values.yaml
 │   ├── kong-config.yaml
+│   └── readme.md
+├── postgres/
+│   ├── install.sh
+│   ├── values.yaml
+│   └── readme.md
+├── litellm/
+│   ├── install.sh
+│   ├── deployment.yaml
 │   └── readme.md
 └── lab/
     └── ACME/
@@ -321,6 +331,8 @@ cd gitlab
 | Argo CD | `http://localhost:30004` | `argocd.local` |
 | Grafana | `http://localhost:30005` | `grafana.local` |
 | Uptime Kuma | `http://localhost:30006` | `uptime-kuma.local` |
+| Postgres | `http://localhost:30432` | — |
+| LiteLLM | `http://localhost:30433` | — |
 | Portainer (HTTP) | `http://localhost:30777` | — |
 | Portainer (HTTPS) | `https://localhost:30779` | — |
 | Kong Admin API | `http://localhost:30007` | — |
@@ -412,6 +424,8 @@ cd ../argocd && ./install.sh
 cd ../grafana && ./install.sh
 cd ../vault && ./install.sh
 cd ../uptime-kuma && ./install.sh
+cd ../postgres && ./install.sh
+cd ../litellm && ./install.sh
 cd ../portainer && ./install.sh
 cd ../kong && ./install.sh
 
