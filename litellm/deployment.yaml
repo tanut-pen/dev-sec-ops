@@ -15,8 +15,6 @@ spec:
       labels:
         app: litellm
     spec:
-      imagePullSecrets: 
-      - name: regcred
       containers:
       - name: litellm
         image: docker.litellm.ai/berriai/litellm:main-latest
