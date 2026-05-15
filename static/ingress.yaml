@@ -6,7 +6,7 @@ metadata:
 spec:
   ingressClassName: istio
   rules:
-  - host: jenkins.dev.tpinf.xyz
+  - host: jenkins.tpinf.xyz
     http:
       paths:
       - path: /
@@ -25,7 +25,7 @@ metadata:
 spec:
   ingressClassName: istio
   rules:
-  - host: argocd.dev.tpinf.xyz
+  - host: argocd.tpinf.xyz
     http:
       paths:
       - path: /
@@ -44,7 +44,7 @@ metadata:
 spec:
   ingressClassName: istio
   rules:
-  - host: harbor.dev.tpinf.xyz
+  - host: harbor.tpinf.xyz
     http:
       paths:
       - path: /
@@ -82,7 +82,7 @@ metadata:
 spec:
   ingressClassName: istio
   rules:
-  - host: api.dev.tpinf.xyz
+  - host: api.tpinf.xyz
     http:
       paths:
       - path: /
@@ -101,7 +101,7 @@ metadata:
 spec:
   ingressClassName: istio
   rules:
-  - host: litellm.dev.tpinf.xyz
+  - host: litellm.tpinf.xyz
     http:
       paths:
       - path: /
