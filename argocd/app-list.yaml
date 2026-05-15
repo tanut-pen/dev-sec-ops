@@ -263,68 +263,68 @@ spec:
       - CreateNamespace=true
 ---
 # ── Vault ─────────────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: vault
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://helm.releases.hashicorp.com
-      chart: vault
-      targetRevision: "*"
-      helm:
-        releaseName: vault
-        valueFiles:
-          - $values/vault/vault-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: vault
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: vault
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://helm.releases.hashicorp.com
+#       chart: vault
+#       targetRevision: "*"
+#       helm:
+#         releaseName: vault
+#         valueFiles:
+#           - $values/vault/vault-values.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: vault
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
 ---
 # ── Uptime Kuma ───────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: uptime-kuma
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://helm.irsigler.cloud
-      chart: uptime-kuma
-      targetRevision: "*"
-      helm:
-        releaseName: uptime-kuma
-        valueFiles:
-          - $values/uptime-kuma/values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: monitoring
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: uptime-kuma
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://helm.irsigler.cloud
+#       chart: uptime-kuma
+#       targetRevision: "*"
+#       helm:
+#         releaseName: uptime-kuma
+#         valueFiles:
+#           - $values/uptime-kuma/values.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: monitoring
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
 ---
 # ── Kong Gateway ──────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
