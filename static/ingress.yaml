@@ -44,7 +44,7 @@ metadata:
 spec:
   ingressClassName: istio
   rules:
-  - host: harbor.local
+  - host: harbor.tpinf.xyz
     http:
       paths:
       - path: /
