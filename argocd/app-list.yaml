@@ -400,6 +400,7 @@ spec:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
     path: litellm
+    kustomize: {}
   destination:
     server: https://kubernetes.default.svc
     namespace: litellm
