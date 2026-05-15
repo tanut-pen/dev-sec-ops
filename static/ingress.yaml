@@ -92,3 +92,22 @@ spec:
             name: kong-kong-proxy
             port:
               number: 80
+--- 
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: litellm-ingress
+  namespace: litellm
+spec:
+  ingressClassName: istio
+  rules:
+  - host: litellm.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: litellm
+            port:
+              number: 4000
