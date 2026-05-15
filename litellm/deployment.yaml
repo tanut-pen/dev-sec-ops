@@ -41,6 +41,11 @@ spec:
             secretKeyRef:
               name: litellm-secret
               key: LITELLM_MASTER_KEY
+        - name: JENKINS_BASIC_AUTH
+          valueFrom:
+            secretKeyRef:
+              name: litellm-secret
+              key: JENKINS_BASIC_AUTH
       volumes:
       - name: litellm-config-volume
         configMap:

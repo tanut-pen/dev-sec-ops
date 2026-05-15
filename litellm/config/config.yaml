@@ -22,7 +22,7 @@ mcp_servers:
   jenkins_mcp:
     transport: "sse"
     # Ensure this matches the actual Jenkins MCP Plugin endpoint
-    url: "http://jenkins.local:8080/mcp-server/sse"
+    url: "http://jenkins.tpinf.xyz/mcp-server/sse"
     headers:
       # Inject credentials securely via OS environment variables
       Authorization: "os.environ/JENKINS_BASIC_AUTH"
