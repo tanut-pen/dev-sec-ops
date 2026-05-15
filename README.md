@@ -414,3 +414,12 @@ kubectl apply -f ingress.yaml
 ## Summary
 
 This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, DefectDojo, Argo CD, Grafana, Vault, Uptime Kuma, Portainer, Kubeseal, and Kong Gateway into a single environment suitable for demos, learning, and experimentation.
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: remote-admin-token
+  namespace: kube-system
+  annotations:
+    kubernetes.io/service-account.name: remote-admin
+type: kubernetes.io/service-account-token

@@ -1371,9 +1371,7 @@ clustertelemetry:
     # Each path in an Ingress is required to have a corresponding path type. (ImplementationSpecific/Exact/Prefix)
     pathType: ImplementationSpecific
 
-extraConfigMaps:
-- name: kong-dbless-config
-  mountPath: /etc/kong/
+extraConfigMaps: []
 # extraConfigMaps:
 # - name: my-config-map
 #   mountPath: /mount/to/my/location
