@@ -320,37 +320,16 @@ cd gitlab
 - Requires a real domain and external IP before use
 - Edit `install.sh` to set `global.hosts.domain`, `global.hosts.externalIP`, and `certmanager-issuer.email`
 
-## Accessing Services
-
-| Service | NodePort URL | Ingress Host |
-|---------|-------------|--------------|
-| Jenkins | `http://localhost:30003` | `jenkins.local` |
-| SonarQube | — | `sonarqube.local` |
-| Harbor | `http://localhost:30002` | `harbor.local` |
-| DefectDojo | `http://localhost:30001` | `defectdojo.local` |
-| Argo CD | `http://localhost:30004` | `argocd.local` |
-| Grafana | `http://localhost:30005` | `grafana.local` |
-| Uptime Kuma | `http://localhost:30006` | `uptime-kuma.local` |
-| Postgres | `http://localhost:30432` | — |
-| LiteLLM | `http://localhost:30433` | — |
-| Portainer (HTTP) | `http://localhost:30777` | — |
-| Portainer (HTTPS) | `https://localhost:30779` | — |
-| Kong Admin API | `http://localhost:30007` | — |
-| Kong Proxy (HTTP) | `http://localhost:30008` | — |
-| Kong Proxy (HTTPS) | `https://localhost:30009` | — |
-
-> Ingress hosts require a running Ingress controller and `/etc/hosts` entries pointing to your cluster IP.
-
 ## Ingress Rules (`ingress.yaml`)
 
 The `ingress.yaml` at the repo root defines rules for:
 
-- `jenkins.local` → `jenkins:8080`
-- `sonarqube.local` → `sonarqube-sonarqube:9000`
+- `jenkins.tpinf.xyz` → `jenkins:8080`
 - `argocd.local` → `argocd-server:80`
 - `harbor.local` → `my-harbor-portal:80`
 - `defectdojo.local` → `defectdojo-django:80`
-- `grafana.local` → `grafana-grafana:80`
+- `api.tpinf.xyz` → `kong-kong-proxy:80`
+- `litellm.tpinf.xyz` → `litellm:4000`
 
 Apply with:
 
