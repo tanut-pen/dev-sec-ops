@@ -77,3 +77,10 @@ http://localhost:30002
 
 - The folder name is `Habor`, but the tool is Harbor.
 - TLS is disabled in this local setup. That is acceptable for a lab, but not for production.
+
+kubectl create secret docker-registry regcred \
+  --docker-server=harbor.local \
+  --docker-username=YOUR_USERNAME \
+  --docker-password=YOUR_PASSWORD \
+  --docker-email=your@email.com \
+  --namespace=your-namespace

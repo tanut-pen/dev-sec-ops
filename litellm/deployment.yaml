@@ -19,6 +19,8 @@ spec:
       - name: litellm
         image: harbor.local:30002/my-project/litellm:v1
         imagePullPolicy: Always
+        imagePullSecrets: 
+        - name: regcred
         ports:
         - containerPort: 4000
         env:
