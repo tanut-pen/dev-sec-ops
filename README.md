@@ -417,4 +417,8 @@ This repository is a local DevSecOps playground for testing a secure CI workflow
 
 ##Get token after apply secret
 
+kubectl create serviceaccount remote-admin -n kube-system
+
+kubectl create clusterrolebinding remote-admin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:remote-admin
+
 kubectl get secret remote-admin-token -n kube-system -o jsonpath='{.data.token}' | base64 --decode

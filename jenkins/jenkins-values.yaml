@@ -534,7 +534,28 @@ controller:
     configUrls: []
     # - https://acme.org/jenkins.yaml
     # -- List of Jenkins Config as Code scripts
-    configScripts: {}
+    configScripts:
+      seed-job: |
+        jobs:
+          - script: >
+              freeStyleJob('seed-job') {
+                displayName('Seed Job')
+                scm {
+                  git {
+                    remote {
+                      url('https://github.com/tanut-pen/dev-sec-ops.git')
+                      credentials('tanut-pen')
+                    }
+                    branch('*')
+                  }
+                }
+                steps {
+                  jobDsl {
+                    targets('jenkins/demo/*.groovy')
+                    removedJobAction('DELETE')
+                  }
+                }
+              }
     #  welcome-message: |
     #    jenkins:
     #      systemMessage: Welcome to our CI\CD server. This Jenkins is configured and managed 'as code'.
