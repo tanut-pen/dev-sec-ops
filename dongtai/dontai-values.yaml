@@ -4,3 +4,29 @@
 # Disable persistent storage — no StorageClass/PVC needed in local lab
 storage:
   persistentVolumeClaim: null
+
+# Tell the chart to create the config.ini ConfigMap internally
+config:
+  createConfig: true
+  mysql:
+    host: dongtai-iast-mysql
+    port: 3306
+    name: dongtai_webapi
+    user: root
+    password: dongtai-iast-
+  redis:
+    host: dongtai-iast-redis-master
+    port: 6379
+    password: ""
+
+# Disable external MySQL/Redis (use chart-managed ones)
+mysql:
+  enabled: true
+  auth:
+    rootPassword: "dongtai-iast-"
+    database: dongtai_webapi
+
+redis:
+  enabled: true
+  auth:
+    enabled: false
