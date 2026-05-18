@@ -8,11 +8,11 @@ securityContext:
     runAsNonRoot: true
 
 # -- create defectdojo specific secret
-createSecret: false
+createSecret: true
 # -- create valkey secret in defectdojo chart, outside of valkey chart
-createValkeySecret: false
+createValkeySecret: true
 # -- create postgresql secret in defectdojo chart, outside of postgresql chart
-createPostgresqlSecret: false
+createPostgresqlSecret: true
 # -- Track configuration (trackConfig): will automatically respin application pods in case of config changes detection
 # can be:
 # 1. disabled (default)
@@ -177,7 +177,7 @@ tests:
 
 admin:
   user: admin
-  password: ""
+  password: "admin"
   firstName: Administrator
   lastName: User
   mail: admin@defectdojo.local
@@ -559,7 +559,7 @@ postgresql:
   enabled: true
   auth:
     username: defectdojo
-    password: ""
+    password: "admin"
     database: defectdojo
     existingSecret: defectdojo-postgresql-specific
     secretKeys:
@@ -640,7 +640,7 @@ valkey:
   auth:
     existingSecret: defectdojo-valkey-specific
     existingSecretPasswordKey: valkey-password
-    password: ""
+    password: "admin"
   # -- To use a different port for Redis (default: 6379)
   service:
     port: 6379
