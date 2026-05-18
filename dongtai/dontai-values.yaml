@@ -29,7 +29,7 @@ env: {}
 skipMysql: false
 
 mysql:
-  host: dongtai-mysql    # matches the service the chart creates
+  host: mysql.dongtai.svc.cluster.local    # matches the service the chart creates
   port: 3306
   name: dongtai_webapi
   user: root

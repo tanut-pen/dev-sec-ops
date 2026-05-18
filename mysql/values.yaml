@@ -1,0 +1,14 @@
+auth:
+  rootPassword: "dongtai-iast"
+  database: "dongtai_webapi"
+  username: "root"
+  password: "dongtai-iast"
+
+primary:
+  persistence:
+    enabled: true
+    size: 8Gi
+  service:
+    type: NodePort
+    nodePorts:
+      mysql: 30306
