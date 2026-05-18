@@ -23,7 +23,7 @@ mcp_servers:
     transport: "sse"
     url: "https://jenkins.tpinf.xyz/mcp-server/sse"
     headers:
-      Authorization: "os.getenv('JENKINS_BASIC_AUTH')"
+      Authorization: "os.environ/JENKINS_BASIC_AUTH"
 
 
       
