@@ -24,6 +24,13 @@ data:
     password = 
     db = 0
 
+
+    [log_service]
+    host = dongtai-logstash-svc
+    port = 8083
+    enable = false
+
+
     [elastic_search]
     enable = false
     host = 127.0.0.1
