@@ -20,9 +20,8 @@ mcp_servers:
     env:
       KUBECONFIG: "/root/.kube/backup/nonprod-cicd-vayu"  # path to your kubeconfig
   jenkins_mcp:
-    transport: "sse"
-    # Ensure this matches the actual Jenkins MCP Plugin endpoint
-    url: "http://jenkins.tpinf.xyz/mcp-server/sse"
-    headers:
-      # Inject credentials securely via OS environment variables
-      Authorization: "os.environ/JENKINS_BASIC_AUTH"
+    url: "https://jenkins.tpinf.xyz/mcp"
+    transport: "http"
+    allow_all_keys: true
+    auth_type: "none"
+    extra_headers: ["x-jenkins-url","x-jenkins-username","x-jenkins-password"]
