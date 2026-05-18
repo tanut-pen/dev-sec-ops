@@ -23,4 +23,4 @@ mcp_servers:
     transport: "sse"
     url: "https://jenkins.tpinf.xyz/mcp-server/sse"
     headers:
-      Authorization: "os.environ/JENKINS_BASIC_AUTH"
+      Authorization: "Basic MTEwNGQwYTdmZDExOTMzMTgwYjZmYzY4MWUwMGFlNjExOAo="
