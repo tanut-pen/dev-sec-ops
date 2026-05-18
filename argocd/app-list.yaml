@@ -409,3 +409,34 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+---
+# ── Dongtai ───────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: dongtai
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: https://charts.dongtai.io/iast
+      chart: dongtai
+      targetRevision: "*"
+      helm:
+        valueFiles:
+          - $values/dongtai/dontai-values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jenkins
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
