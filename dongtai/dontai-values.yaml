@@ -27,17 +27,17 @@ env: {}
 
 # ✅ FIX 2: Use chart-managed MySQL (no external DB needed in local lab)
 skipMysql: false
+
 mysql:
-  host: dongtai-iast-mysql      # chart-managed MySQL service name
+  host: dongtai-mysql    # matches the service the chart creates
   port: 3306
   name: dongtai_webapi
   user: root
   password: dongtai-iast-
 
-# ✅ FIX 3: Use chart-managed Redis
 skipRedis: false
 redis:
-  host: dongtai-iast-redis-master   # chart-managed Redis service name
+  host: dongtai-redis
   port: 6379
   password: ""
   db: 0
