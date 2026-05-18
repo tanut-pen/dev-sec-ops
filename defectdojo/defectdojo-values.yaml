@@ -363,7 +363,7 @@ django:
   podSecurityContext:
     fsGroup: 1001
   ingress:
-    enabled: true
+    enabled: false
     ingressClassName: ""
     activateTLS: false
     secretName: defectdojo-tls
