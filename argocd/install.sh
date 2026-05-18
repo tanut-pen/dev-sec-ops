@@ -15,3 +15,9 @@ helm upgrade --install argo-rollouts argo/argo-rollouts \
   -f values-rollouts.yaml
 
 kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+
+
+kubectl --kubeconfig=path/to/config-rancher-lab config get-contexts
+
+
+export KUBECONFIG=~/.kube/config:~/.kube/config-rancher-lab

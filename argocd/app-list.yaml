@@ -131,37 +131,37 @@ spec:
 #     syncOptions:
 #       - CreateNamespace=true
 
-# # ── Harbor ────────────────────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: harbor
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://helm.goharbor.io
-#       chart: harbor
-#       targetRevision: "*"
-#       helm:
-#         releaseName: my-harbor
-#         valueFiles:
-#           - $values/harbor/harbor-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: harbor
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
+# ── Harbor ────────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: harbor
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: https://helm.goharbor.io
+      chart: harbor
+      targetRevision: "*"
+      helm:
+        releaseName: my-harbor
+        valueFiles:
+          - $values/harbor/harbor-values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: harbor
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
 ---
 # ── DefectDojo ────────────────────────────────────────────────────────────────
 # Note: createSecret/createValkeySecret/createPostgresqlSecret are one-time
