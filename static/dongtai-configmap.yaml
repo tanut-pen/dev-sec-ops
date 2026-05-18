@@ -18,12 +18,6 @@ data:
     user = root
     password = dongtai-iast
 
-    [redis]
-    host = dongtai-redis
-    port = 6379
-    password = 123456
-    db = 0
-
     [engine]
     url = http://dongtai-engine:8000
 
@@ -54,9 +48,6 @@ data:
     async_send = true
     async_send_delay = 5
 
-    [log_service]
-    host = dongtai-logstash-svc
-    port = 8083
 
     [common_file_path]
     tmp_path = /tmp/logstash
@@ -65,14 +56,6 @@ data:
     report_word = report/word
     report_excel = report/excel
 
-    [elastic_search]
-    enable = false
-    host = http://user:passwd@127.0.0.1:9200
-    vulnerability_index = dongtai-iast-alias-dongtai-v1-vulnerability
-    asset_aggr_index = dongtai-iast-alias-dongtai-v1-asset-aggr
-    asset_index = dongtai-iast-alias-dongtai-v1-asset
-    method_pool_index = dongtai-iast-alias-dongtai-v1-method-pool
-    asset_vul_index = dongtai-iast-alias-dongtai-v1-asset-vul
 
     [other]
     logging_level = INFO
