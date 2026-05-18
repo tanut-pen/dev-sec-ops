@@ -1,60 +1,83 @@
-# Disable persistent storage
-storage:
-  persistentVolumeClaim: null
+# Default values for dongtai - Fixed for local Rancher lab
+skipistio: true
 
-# Override ALL images from dead Aliyun registry → Docker Hub
-image:
-  registry: docker.io
-  pullPolicy: Always
+# ✅ FIX 1: Changed from dead Aliyun registry → Docker Hub
+images: dongtai
+tag: latest
+imagePullPolicy: Always
+replicaCount: 1
+requestsCpu: 100m
+requestsMemory: 200Mi
+limitsCpu: 500m
+limitsMemory: 1000Mi
+accessType: NodePort   # NodePort works better for local Rancher access
+NodePort: 30080
+logging_level: INFO
+somaxconn: null
+healthcheck: true
+tcphealthcheck: true
+logstash: "true"
+migrate: true
 
-# Override each component image
-server:
-  image:
-    repository: dongtai/dongtai-server
-    tag: latest
+nodeSelector:
+  kubernetes.io/os: linux
+  kubernetes.io/arch: amd64
+podLabels: {}
+env: {}
 
-engine:
-  image:
-    repository: dongtai/dongtai-engine
-    tag: latest
-
-web:
-  image:
-    repository: dongtai/dongtai-web
-    tag: latest
-
-logstash:
-  image:
-    repository: dongtai/dongtai-logstash
-    tag: latest
-
+# ✅ FIX 2: Use chart-managed MySQL (no external DB needed in local lab)
+skipMysql: false
 mysql:
-  enabled: true
-  image:
-    repository: dongtai/dongtai-mysql
-    tag: latest
-  auth:
-    rootPassword: "dongtai-iast-"
-    database: dongtai_webapi
+  host: dongtai-iast-mysql      # chart-managed MySQL service name
+  port: 3306
+  name: dongtai_webapi
+  user: root
+  password: dongtai-iast-
 
+# ✅ FIX 3: Use chart-managed Redis
+skipRedis: false
 redis:
-  enabled: true
-  image:
-    repository: dongtai/dongtai-redis
-    tag: latest
-  auth:
-    enabled: false
+  host: dongtai-iast-redis-master   # chart-managed Redis service name
+  port: 6379
+  password: ""
+  db: 0
 
-# Config
-config:
-  createConfig: true
-  mysql:
-    host: dongtai-iast-mysql
-    port: 3306
-    name: dongtai_webapi
-    user: root
-    password: dongtai-iast-
-  redis:
-    host: dongtai-iast-redis-master
-    port: 6379
-    password: ""
+sca:
+  sca_url: https://sca.tingyun.com/
+  sca_token:
+
+usb:
+  usb_token:
+
+# ✅ FIX 4: No PVC needed for local lab (was causing FailedMount)
+storage:
+  storageClassName: null
+  persistentVolumeClaim: null   # null = disable agent log PVC
+
+csrfTrustOrigins: .example.com
+
+smtp:
+  server: smtp_server
+  user: smtp_user
+  password: smtp_password
+  from_addr: from_addr
+  ssl: False
+  cc_addr: cc_addr
+
+build:
+  agent_number: latest
+  web_number: latest
+  server_number: latest
+  logstash_number: latest
+  mysql_number: latest
+  redis_number: latest
+  env_server: --processes 4
+  env_beta: --concurrency=2
+  env_chain: -P gevent --concurrency=121
+  env_es: -P gevent --concurrency=64
+  env_high: -P gevent --concurrency=121
+  env_other: -P gevent --concurrency=10
+  env_sca: -P gevent --concurrency=10
+
+develop:
+  dev:
