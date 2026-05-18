@@ -434,7 +434,7 @@ spec:
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: jenkins
+    namespace: dongtai
   syncPolicy:
     automated:
       selfHeal: true
