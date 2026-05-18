@@ -1,11 +1,51 @@
-# Let the chart manage its own MySQL and Redis instances
-# (external services my-dongtai-mysql / my-dongtai-redis do not exist in cluster)
-
-# Disable persistent storage — no StorageClass/PVC needed in local lab
+# Disable persistent storage
 storage:
   persistentVolumeClaim: null
 
-# Tell the chart to create the config.ini ConfigMap internally
+# Override ALL images from dead Aliyun registry → Docker Hub
+image:
+  registry: docker.io
+  pullPolicy: Always
+
+# Override each component image
+server:
+  image:
+    repository: dongtai/dongtai-server
+    tag: latest
+
+engine:
+  image:
+    repository: dongtai/dongtai-engine
+    tag: latest
+
+web:
+  image:
+    repository: dongtai/dongtai-web
+    tag: latest
+
+logstash:
+  image:
+    repository: dongtai/dongtai-logstash
+    tag: latest
+
+mysql:
+  enabled: true
+  image:
+    repository: dongtai/dongtai-mysql
+    tag: latest
+  auth:
+    rootPassword: "dongtai-iast-"
+    database: dongtai_webapi
+
+redis:
+  enabled: true
+  image:
+    repository: dongtai/dongtai-redis
+    tag: latest
+  auth:
+    enabled: false
+
+# Config
 config:
   createConfig: true
   mysql:
@@ -18,15 +58,3 @@ config:
     host: dongtai-iast-redis-master
     port: 6379
     password: ""
-
-# Disable external MySQL/Redis (use chart-managed ones)
-mysql:
-  enabled: true
-  auth:
-    rootPassword: "dongtai-iast-"
-    database: dongtai_webapi
-
-redis:
-  enabled: true
-  auth:
-    enabled: false

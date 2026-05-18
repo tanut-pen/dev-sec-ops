@@ -1,0 +1,229 @@
+---
+# ConfigMap: dongtai-iast-config.ini
+# Main application configuration for DongTai IAST server, engine, and workers.
+# Rendered from: deploy/kubernetes/helm/templates/configmaps/dongtai-cm.yaml
+# Reference: https://github.com/HXSecurity/DongTai/tree/develop/deploy/kubernetes
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dongtai-iast-config.ini
+  namespace: dongtai
+data:
+  config.ini: |-
+    [mysql]
+    host = dongtai-mysql
+    port = 3306
+    name = dongtai_webapi
+    user = root
+    password = dongtai-iast
+
+    [redis]
+    host = dongtai-redis
+    port = 6379
+    password = 123456
+    db = 0
+
+    [engine]
+    url = http://dongtai-engine:8000
+
+    [apiserver]
+    url = http://dongtai-server:8000
+
+    [security]
+    csrf_trust_origins = .example.com
+    secret_key = CHANGE_ME_USE_A_LONG_RANDOM_50_CHAR_STRING_HERE
+
+    [smtp]
+    server = smtp_server
+    user = smtp_user
+    password = smtp_password
+    from_addr = from_addr
+    ssl = False
+    cc_addr = cc_addr
+    port =
+
+    [sca]
+    base_url = https://sca.huoxian.cn/
+    timeout = 5
+    token =
+
+    [task]
+    retryable = true
+    max_retries = 3
+    async_send = true
+    async_send_delay = 5
+
+    [log_service]
+    host = dongtai-logstash-svc
+    port = 8083
+
+    [common_file_path]
+    tmp_path = /tmp/logstash
+    report_img = report/img
+    report_pdf = report/pdf
+    report_word = report/word
+    report_excel = report/excel
+
+    [elastic_search]
+    enable = false
+    host = http://user:passwd@127.0.0.1:9200
+    vulnerability_index = dongtai-iast-alias-dongtai-v1-vulnerability
+    asset_aggr_index = dongtai-iast-alias-dongtai-v1-asset-aggr
+    asset_index = dongtai-iast-alias-dongtai-v1-asset
+    method_pool_index = dongtai-iast-alias-dongtai-v1-method-pool
+    asset_vul_index = dongtai-iast-alias-dongtai-v1-asset-vul
+
+    [other]
+    logging_level = INFO
+    cache_preheat = True
+    domain =
+    domain_vul =
+    dast_token =
+
+    [health_check]
+    heartbeat = false
+    heartbeat_server_url = http://dongtai-server-svc/api/v2/health_check/report
+
+---
+# ConfigMap: logstash-cm
+# MySQL connection credentials used by the Logstash JDBC output plugin.
+# Rendered from: deploy/kubernetes/helm/templates/configmaps/dongtai-cm.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: logstash-cm
+  namespace: dongtai
+data:
+  database: dongtai-mysql:3306/dongtai_webapi
+  username: root
+  password: dongtai-iast
+
+---
+# ConfigMap: dongtai-web-nginx-conf
+# Nginx reverse-proxy configuration for the DongTai web frontend.
+# Rendered from: deploy/kubernetes/helm/templates/configmaps/dongtai-cm.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: dongtai-web-nginx-conf
+  namespace: dongtai
+data:
+  nginx.conf: |-
+    worker_processes  auto;
+    events {
+        worker_connections  65535;
+    }
+    http {
+        include       mime.types;
+        default_type  application/octet-stream;
+        sendfile        on;
+        keepalive_timeout  65;
+
+        gzip on;
+        gzip_min_length  5k;
+        gzip_buffers     4 16k;
+        gzip_comp_level 3;
+        gzip_types text/plain application/javascript application/x-javascript text/css application/xml text/javascript application/x-httpd-php image/jpeg image/gif image/png;
+        gzip_vary on;
+
+        server {
+            listen  80;
+            server_name 0.0.0.0;
+            client_max_body_size 100M;
+
+            location / {
+                root /usr/share/nginx/html;
+                index index.html index.htm;
+                try_files $uri $uri/ /index.html;
+            }
+            location /api/ {
+              proxy_read_timeout 60;
+              proxy_pass http://dongtai-server-svc:80/api/;
+            }
+            location /upload/ {
+              proxy_pass http://dongtai-server-svc:80/upload/;
+            }
+            location /openapi/ {
+             proxy_set_header X-real-ip $remote_addr;
+             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+             proxy_set_header User-Agent $http_user_agent;
+             proxy_set_header X-Host $http_x_forwarded_host;
+             proxy_read_timeout 60;
+             proxy_pass http://dongtai-server-svc:80/;
+            }
+            location /log/ {
+             proxy_pass http://dongtai-logstash-svc:8082/;
+            }
+            location = /50x.html {
+                root   /usr/share/nginx/html;
+            }
+        }
+    }
+
+---
+# ConfigMap: agent-config
+# Logstash pipeline configuration for receiving agent data via HTTP/TCP
+# and writing to MySQL via the JDBC analyticdb output plugin.
+# Rendered from: deploy/kubernetes/helm/templates/configmaps/dongtai-logstash.yaml
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agent-config
+  namespace: dongtai
+data:
+  logstash.conf: |
+    input {
+      http {
+        host => "0.0.0.0"
+        port => 8082
+        user => "sjkadfkjdsahfkds"
+        password => "dsjkfkjsadfhkjsadhfksdsjdafjkdsagfjhsadgfjsdfg12312!"
+        type => "tcp"
+        codec => "json"
+      }
+      tcp {
+        port => 8083
+        type => "log"
+      }
+    }
+    filter {
+      if [type] == "tcp" {
+        ruby {
+           code => "event.set('timestamp', event.get('@timestamp').time.localtime + 8*60*60)"
+        }
+        ruby {
+           code => "event.set('@timestamp',event.get('timestamp'))"
+        }
+        mutate {
+           remove_field => ["timestamp","@version","host","date","headers"]
+        }
+      }
+      if [type] == "log" {
+        json {
+          source => ["message"]
+          remove_field => ["message"]
+        }
+      }
+    }
+    output {
+      if [type] == "tcp" {
+        file {
+            path => ["/tmp/logstash/agent/%{[agent]}/%{+YYYY.MM.dd}.log"]
+        }
+      }
+      if [type] == "log" {
+        analyticdb {
+            driver_class => "com.mysql.jdbc.Driver"
+            max_pool_size => "100"
+            connection_test_query => "SELECT 1"
+            connection_string => "jdbc:mysql://${DATABASE}?useSSL=false"
+            username => "${USERNAME}"
+            password => "${PASSWORD}"
+            statement => [ "INSERT IGNORE INTO `iast_agent_method_pool` (`agent_id`,`url`, `uri`, `http_method`, `http_scheme`, `http_protocol`, `req_header`, `req_params`, `req_data`, `res_header`, `res_body`, `context_path`, `method_pool`, `clent_ip`, `create_time`, `update_time`, `pool_sign`, `req_header_for_search`, `uri_sha1`, `pattern_uri`) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)","agent_id","url","uri","http_method","http_scheme","http_protocol","req_header","req_params","req_data","res_header","res_body","context_path","method_pool","clent_ip","create_time","update_time","pool_sign","req_header_for_search","uri_sha1","pattern_uri"]
+        }
+      }
+    }
