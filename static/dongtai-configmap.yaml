@@ -18,6 +18,12 @@ data:
     user = root
     password = dongtai-iast
 
+    [redis]
+    host = dongtai-redis.dongtai.svc.cluster.local
+    port = 6379
+    password = 
+    db = 0
+
     [engine]
     url = http://dongtai-engine:8000
 
