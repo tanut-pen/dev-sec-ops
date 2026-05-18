@@ -92,17 +92,17 @@ networkPolicy:
   annotations: {}
 
 # -- Primary hostname of instance
-host: defectdojo.local
+host: defectdojo.tpinf.xyz
 
 # -- The full URL to your defectdojo instance, depends on the domain where DD is deployed, it also affects links in Jira.
 # Use syntax: `siteUrl: 'https://<yourdomain>'`
-siteUrl: "http://defectdojo.local"
+siteUrl: "https://defectdojo.tpinf.xyz"
 
 # -- optional list of alternative hostnames to use that gets appended to
 # DD_ALLOWED_HOSTS. This is necessary when your local hostname does not match
 # the global hostname.
 alternativeHosts:
-  - defectdojo.local
+  - defectdojo.tpinf.xyz
 #  - defectdojo.example.com
 imagePullPolicy: Always
 # @schema type:[string, null]
@@ -667,7 +667,7 @@ valkey:
 # DD_SOCIAL_AUTH_AUTH0_DOMAIN: 'xxxxx'
 # ```
 extraConfigs:
-  DD_CSRF_TRUSTED_ORIGINS: 'http://defectdojo.local'
+  DD_CSRF_TRUSTED_ORIGINS: 'https://defectdojo.tpinf.xyz'
 
 # -- Extra secrets can be created inside of extraSecrets block:
 # NOTE  This is just an exmaple, do not store sensitive data in plain text form, better inject it during the deployment/upgrade by --set extraSecrets.secret=someSecret
