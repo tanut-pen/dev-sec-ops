@@ -24,6 +24,13 @@ data:
     password = 
     db = 0
 
+    [elastic_search]
+    enable = false
+    host = 127.0.0.1
+    port = 9200
+    user =
+    password =
+
     [engine]
     url = http://dongtai-engine:8000
 
