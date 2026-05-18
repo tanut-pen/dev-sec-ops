@@ -1,0 +1,132 @@
+---
+# MySQL 8.0 — official image (docker.io/library/mysql:8.0)
+# Replaces bitnami/mysql chart whose images were removed from Docker Hub after Aug 2025.
+# Namespace: dongtai (shared with DongTai app)
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: mysql-secret
+  namespace: dongtai
+type: Opaque
+stringData:
+  MYSQL_ROOT_PASSWORD: "dongtai-iast"
+  MYSQL_DATABASE: "dongtai_webapi"
+  MYSQL_USER: "dongtai"
+  MYSQL_PASSWORD: "dongtai-iast"
+
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: mysql-pvc
+  namespace: dongtai
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: dongtai
+  labels:
+    app: mysql
+spec:
+  serviceName: mysql
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3306
+              name: mysql
+          envFrom:
+            - secretRef:
+                name: mysql-secret
+          args:
+            - --default-authentication-plugin=mysql_native_password
+            - --character-set-server=utf8mb4
+            - --collation-server=utf8mb4_unicode_ci
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+          readinessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+                - -u
+                - root
+                - -pdongtai-iast
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            exec:
+              command:
+                - mysqladmin
+                - ping
+                - -h
+                - localhost
+                - -u
+                - root
+                - -pdongtai-iast
+            initialDelaySeconds: 30
+            periodSeconds: 20
+            timeoutSeconds: 5
+      volumes:
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc
+
+---
+# ClusterIP for internal access: mysql.dongtai.svc.cluster.local:3306
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql
+  namespace: dongtai
+  labels:
+    app: mysql
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      name: mysql
+
+---
+# NodePort for external access from local workstation
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-nodeport
+  namespace: dongtai
+  labels:
+    app: mysql
+spec:
+  type: NodePort
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      nodePort: 30306
+      name: mysql

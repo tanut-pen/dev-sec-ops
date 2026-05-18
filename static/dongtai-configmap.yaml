@@ -12,7 +12,7 @@ metadata:
 data:
   config.ini: |-
     [mysql]
-    host = dongtai-mysql
+    host = mysql.dongtai.svc.cluster.local
     port = 3306
     name = dongtai_webapi
     user = root
