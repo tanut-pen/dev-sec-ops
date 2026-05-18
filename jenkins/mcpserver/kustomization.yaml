@@ -4,7 +4,7 @@ kind: Kustomization
 namespace: jenkins
 
 resources:
-  - secret.yaml
+  # - secret.yaml
   - deployment.yaml
   - ingress.yaml
 
