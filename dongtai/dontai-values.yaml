@@ -26,7 +26,7 @@ podLabels: {}
 env: {}
 
 # ✅ FIX 2: Use chart-managed MySQL (no external DB needed in local lab)
-skipMysql: false
+skipMysql: true
 
 mysql:
   host: mysql.dongtai.svc.cluster.local    # matches the service the chart creates
