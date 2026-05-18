@@ -423,9 +423,10 @@ spec:
   project: default
   sources:
     - repoURL: https://charts.dongtai.io/iast
-      chart: dongtai
+      chart: dongtai-iast
       targetRevision: "*"
       helm:
+        releaseName: dongtai-iast
         valueFiles:
           - $values/dongtai/dontai-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
