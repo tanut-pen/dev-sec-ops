@@ -1,4 +1,3 @@
-kubectl apply -n dongtai -f - <<EOF            󱃾 rancher-lab  14:56:47
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -17,7 +16,7 @@ spec:
     spec:
       containers:
       - name: mysql
-        image: dongtai/dongtai-mysql:latest   # ← pre-loaded with schema
+        image: dongtai/dongtai-mysql:1.14.0   # ← pre-loaded with schema
         env:
         - name: MYSQL_ROOT_PASSWORD
           value: "dongtai-iast"
@@ -35,4 +34,3 @@ spec:
   ports:
   - port: 3306
     targetPort: 3306
-EOF                                                                        

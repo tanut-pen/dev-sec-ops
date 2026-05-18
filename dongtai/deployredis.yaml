@@ -1,4 +1,3 @@
-kubectl apply -n dongtai -f - <<EOF
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -30,4 +29,3 @@ spec:
   ports:
   - port: 6379
     targetPort: 6379
-EOF
