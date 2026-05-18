@@ -95,7 +95,7 @@ pipeline {
 
     APP_NAME = 'getting-started-todo-app'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
-    REGISTRY_URL = 'harbor.local:30002'
+    REGISTRY_URL = 'harbor.tpinf.xyz'
     REGISTRY_PROJECT = 'lab'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
@@ -229,7 +229,7 @@ pipeline {
         container('trivy') {
             script {
                 // Define the dynamic image name (usually derived from previous build steps)
-                def imageName = "harbor.local:30002/my-project/getting-started-todo-app:${env.BUILD_NUMBER}"
+                def imageName = "${REGISTRY_URL}/my-project/getting-started-todo-app:${env.BUILD_NUMBER}"
                 
                 echo "Scanning Image: ${imageName}"
 
