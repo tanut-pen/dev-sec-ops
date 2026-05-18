@@ -17,7 +17,7 @@ somaxconn: null
 healthcheck: true
 tcphealthcheck: true
 logstash: "false"
-migrate: true
+migrate: false
 
 nodeSelector:
   kubernetes.io/os: linux
