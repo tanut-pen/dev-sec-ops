@@ -1,17 +1,5 @@
-skipMysql: true
-mysql:
-  host: my-dongtai-mysql
-  port: 3306
-  name: my-dongtai_webapi
-  user: root
-  password: my-dongtai-iast
-
-skipRedis: true
-redis:
-  host: my-dongtai-redis
-  port: 6379
-  password: 123456
-  db: 0
+# Let the chart manage its own MySQL and Redis instances
+# (external services my-dongtai-mysql / my-dongtai-redis do not exist in cluster)
 
 # Disable persistent storage — no StorageClass/PVC needed in local lab
 storage:
