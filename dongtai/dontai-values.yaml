@@ -16,7 +16,7 @@ logging_level: INFO
 somaxconn: null
 healthcheck: true
 tcphealthcheck: true
-logstash: "true"
+logstash: "false"
 migrate: true
 
 nodeSelector:
