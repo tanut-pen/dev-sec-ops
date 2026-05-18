@@ -96,7 +96,7 @@ pipeline {
     APP_NAME = 'getting-started-todo-app'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     REGISTRY_URL = 'harbor.local:30002'
-    REGISTRY_PROJECT = 'my-project'
+    REGISTRY_PROJECT = 'lab'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
     SONAR_ORGANIZATION = 'tanut-pen'
