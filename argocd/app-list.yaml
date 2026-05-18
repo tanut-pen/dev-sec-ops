@@ -98,6 +98,31 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
+# ── Jenkins MCP Server (mcp-jenkins) ──────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: jenkins-mcp
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    targetRevision: HEAD
+    path: jenkins/mcpserver
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: jenkins
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
 # ── SonarQube ─────────────────────────────────────────────────────────────────
 # Note: original install.sh uses --set flags (no values file).
 # Using values-sonar.yaml with community edition settings.

@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-jenkins
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: mcp-jenkins
+    app.kubernetes.io/component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-jenkins
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-jenkins
+        app.kubernetes.io/component: mcp-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: mcp-jenkins
+          image: ghcr.io/lanbaoshen/mcp-jenkins:3.3.0
+          imagePullPolicy: IfNotPresent
+          args:
+            - --transport=sse
+            - --host=0.0.0.0
+            - --port=9887
+            - --no-jenkins-verify-ssl
+          env:
+            - name: jenkins_url
+              value: http://jenkins:8080
+            - name: jenkins_username
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-jenkins-secret
+                  key: JENKINS_USERNAME
+            - name: jenkins_password
+              valueFrom:
+                secretKeyRef:
+                  name: mcp-jenkins-secret
+                  key: JENKINS_PASSWORD
+            - name: jenkins_verify_ssl
+              value: "false"
+          ports:
+            - name: http
+              containerPort: 9887
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-jenkins
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: mcp-jenkins
+    app.kubernetes.io/component: mcp-server
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: mcp-jenkins
+  ports:
+    - name: http
+      port: 9887
+      targetPort: http
+      nodePort: 30434

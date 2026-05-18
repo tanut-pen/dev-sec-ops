@@ -1,0 +1,21 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-jenkins-ingress
+  namespace: jenkins
+  labels:
+    app.kubernetes.io/name: mcp-jenkins
+    app.kubernetes.io/component: mcp-server
+spec:
+  ingressClassName: istio
+  rules:
+    - host: mcp-jenkins.tpinf.xyz
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: mcp-jenkins
+                port:
+                  number: 9887

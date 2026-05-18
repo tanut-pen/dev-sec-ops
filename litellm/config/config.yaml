@@ -21,9 +21,7 @@ mcp_servers:
       KUBECONFIG: "/root/.kube/backup/nonprod-cicd-vayu"  # path to your kubeconfig
   jenkins_mcp:
     transport: "sse"
-    url: "https://jenkins.tpinf.xyz/mcp-server/sse"
-    headers:
-      Authorization: "os.environ/JENKINS_BASIC_AUTH"
+    url: "http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse"
 
 
       
