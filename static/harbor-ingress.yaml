@@ -1,46 +1,67 @@
-apiVersion: networking.k8s.io/v1
-kind: Ingress
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
 metadata:
-  name: harbor-ingress
+  name: harbor
   namespace: harbor
 spec:
-  ingressClassName: istio
-  rules:
-  - host: harbor.tpinf.xyz
-    http:
-      paths:
-      - path: /api/
-        pathType: Prefix
-        backend:
-          service:
-            name: my-harbor-core
+  hosts:
+    - harbor.tpinf.xyz
+  http:
+    # Token endpoint — must allow ALL methods especially POST
+    - match:
+        - uri:
+            prefix: /service/token
+      route:
+        - destination:
+            host: my-harbor-core
             port:
               number: 80
-      - path: /c/
-        pathType: Prefix
-        backend:
-          service:
-            name: my-harbor-core
+
+    # Registry API — blob uploads
+    - match:
+        - uri:
+            prefix: /v2/
+      route:
+        - destination:
+            host: my-harbor-core
             port:
               number: 80
-      - path: /service/
-        pathType: Prefix
-        backend:
-          service:
-            name: my-harbor-core
+      timeout: 300s                     # long timeout for big image pushes
+
+    # Core API
+    - match:
+        - uri:
+            prefix: /api/
+      route:
+        - destination:
+            host: my-harbor-core
             port:
               number: 80
-      - path: /v2/
-        pathType: Prefix
-        backend:
-          service:
-            name: my-harbor-core    # ← back to core for auth
+
+    - match:
+        - uri:
+            prefix: /c/
+      route:
+        - destination:
+            host: my-harbor-core
             port:
               number: 80
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: my-harbor-portal
+
+    - match:
+        - uri:
+            prefix: /service/
+      route:
+        - destination:
+            host: my-harbor-core
+            port:
+              number: 80
+
+    # Portal — catch all
+    - match:
+        - uri:
+            prefix: /
+      route:
+        - destination:
+            host: my-harbor-portal
             port:
               number: 80
