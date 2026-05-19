@@ -410,6 +410,38 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
+# ── Kubernetes MCP Server ─────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: kubernetes-mcp
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: oci://ghcr.io/containers/charts/kubernetes-mcp-server
+      chart: kubernetes-mcp-server
+      targetRevision: "0.1.0"
+      helm:
+        releaseName: kubernetes-mcp-server
+        valueFiles:
+          - $values/kubernetes-mcp-server/values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kubernetes-mcp-server
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+---
 # ── LiteLLM ───────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application

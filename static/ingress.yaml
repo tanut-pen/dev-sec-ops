@@ -77,6 +77,25 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: mcp-kube-ingress
+  namespace: kubernetes-mcp-server
+spec:
+  ingressClassName: istio
+  rules:
+  - host: mcp-kube.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kubernetes-mcp-server
+            port:
+              number: 8080
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: litellm-ingress
   namespace: litellm
 spec:

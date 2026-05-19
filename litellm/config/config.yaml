@@ -14,9 +14,8 @@ model_list:
 
 mcp_servers:
   kube_mcp:
-    transport: "stdio"
-    command: "npx"
-    args: ["-y", "kubernetes-mcp-server@latest"]
+    transport: "sse"
+    url: "http://kubernetes-mcp-server.kubernetes-mcp-server.svc.cluster.local:8080/sse"
   jenkins_mcp:
     transport: "sse"
     url: "http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse"

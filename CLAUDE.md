@@ -19,6 +19,14 @@
 | Kong Proxy (HTTP) | http://localhost:30008 | — | — |
 | Postgres | postgresql://localhost:30432 | admin | admin |
 | LiteLLM | http://localhost:30433 | — | — |
+| Kubernetes MCP | https://mcp-kube.tpinf.xyz | — | — |
+
+## MCP Servers (in-cluster)
+
+| Server | SSE URL |
+|--------|---------|
+| Jenkins MCP | `http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse` |
+| Kubernetes MCP | `http://kubernetes-mcp-server.kubernetes-mcp-server.svc.cluster.local:8080/sse` |
 
 ## Jenkins Credentials (stored in Jenkins)
 

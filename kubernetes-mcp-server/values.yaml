@@ -1,0 +1,47 @@
+# Helm values for https://github.com/containers/kubernetes-mcp-server
+# Chart: oci://ghcr.io/containers/charts/kubernetes-mcp-server
+
+image:
+  registry: quay.io
+  repository: containers/kubernetes_mcp_server
+  version: v0.0.62
+  pullPolicy: IfNotPresent
+
+replicaCount: 1
+
+ingress:
+  enabled: false
+
+service:
+  type: ClusterIP
+  port: 8080
+
+serviceAccount:
+  create: true
+  automountToken: true
+
+rbac:
+  create: true
+  extraClusterRoleBindings:
+    - name: cluster-view
+      roleRef:
+        name: view
+        external: true
+
+config:
+  port: 8080
+  log_level: 2
+  read_only: true
+  stateless: true
+  cluster_provider_strategy: in-cluster
+  toolsets:
+    - config
+    - core
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 256Mi
