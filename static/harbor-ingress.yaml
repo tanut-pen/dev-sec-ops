@@ -3,11 +3,6 @@ kind: Ingress
 metadata:
   name: harbor-ingress
   namespace: harbor
-  annotations:
-    # Critical for Docker push through Istio
-    nginx.ingress.kubernetes.io/proxy-body-size: "0"
-    nginx.ingress.kubernetes.io/proxy-read-timeout: "600"
-    nginx.ingress.kubernetes.io/proxy-send-timeout: "600"
 spec:
   ingressClassName: istio
   rules:
@@ -39,9 +34,9 @@ spec:
         pathType: Prefix
         backend:
           service:
-            name: my-harbor-registry    # ← changed from my-harbor-core
+            name: my-harbor-core    # ← back to core for auth
             port:
-              number: 5000              # ← changed from 80
+              number: 80
       - path: /
         pathType: Prefix
         backend:
