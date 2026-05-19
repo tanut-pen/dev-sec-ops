@@ -228,8 +228,7 @@ pipeline {
     steps {
         container('trivy') {
             script {
-                // Define the dynamic image name (usually derived from previous build steps)
-                def imageName = "${REGISTRY_URL}/my-project/getting-started-todo-app:${env.BUILD_NUMBER}"
+                def imageName = env.IMAGE_NAME
                 
                 echo "Scanning Image: ${imageName}"
 
