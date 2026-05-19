@@ -1,67 +1,46 @@
-apiVersion: networking.istio.io/v1alpha3
-kind: VirtualService
+apiVersion: networking.k8s.io/v1
+kind: Ingress
 metadata:
-  name: harbor
+  name: harbor-ingress
   namespace: harbor
 spec:
-  hosts:
-    - harbor.tpinf.xyz
-  http:
-    # Token endpoint — must allow ALL methods especially POST
-    - match:
-        - uri:
-            prefix: /service/token
-      route:
-        - destination:
-            host: my-harbor-core
+  ingressClassName: istio
+  rules:
+  - host: harbor.tpinf.xyz
+    http:
+      paths:
+      - path: /api/
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-core
             port:
               number: 80
-
-    # Registry API — blob uploads
-    - match:
-        - uri:
-            prefix: /v2/
-      route:
-        - destination:
-            host: my-harbor-core
+      - path: /c/
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-core
             port:
               number: 80
-      timeout: 300s                     # long timeout for big image pushes
-
-    # Core API
-    - match:
-        - uri:
-            prefix: /api/
-      route:
-        - destination:
-            host: my-harbor-core
+      - path: /service/
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-core
             port:
               number: 80
-
-    - match:
-        - uri:
-            prefix: /c/
-      route:
-        - destination:
-            host: my-harbor-core
+      - path: /v2/
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-core
             port:
               number: 80
-
-    - match:
-        - uri:
-            prefix: /service/
-      route:
-        - destination:
-            host: my-harbor-core
-            port:
-              number: 80
-
-    # Portal — catch all
-    - match:
-        - uri:
-            prefix: /
-      route:
-        - destination:
-            host: my-harbor-portal
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-portal
             port:
               number: 80
