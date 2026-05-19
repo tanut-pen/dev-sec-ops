@@ -20,3 +20,6 @@
 .terraform/
 .terraform.lock.hcl
 secret*.yaml
+.cursor/
+.agents/
+skills-lock.json

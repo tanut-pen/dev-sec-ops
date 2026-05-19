@@ -92,3 +92,22 @@ spec:
             name: litellm
             port:
               number: 4000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: uptime-kuma-ingress
+  namespace: monitoring
+spec:
+  ingressClassName: istio
+  rules:
+  - host: uptime-kuma.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: uptime-kuma
+            port:
+              number: 3001

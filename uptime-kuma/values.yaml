@@ -30,7 +30,6 @@ service:
 
 ingress:
   enabled: false
-  # className: "nginx"
   extraLabels: {}
   annotations:
     nginx.ingress.kubernetes.io/proxy-read-timeout: "3600"
@@ -106,7 +105,6 @@ additionalVolumeMounts: []
 strategy:
   type: RollingUpdate
 
-# External database (disabled — uses SQLite by default)
 externalDatabase:
   type: "mariadb"
   enabled: false
@@ -119,7 +117,6 @@ externalDatabase:
   existingSecretPasswordKey: "password"
   existingSecretUsernameKey: "username"
 
-# Prometheus ServiceMonitor (requires kube-prometheus-stack)
 serviceMonitor:
   enabled: false
   interval: 60s

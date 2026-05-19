@@ -17,10 +17,14 @@ cd uptime-kuma
 ./install.sh
 ```
 
+Or sync via Argo CD (`uptime-kuma` Application in `argocd/app-list.yaml`).
+
 ## Access
 
 - NodePort: `http://localhost:30006`
-- Ingress (optional): `http://uptime-kuma.local` (requires Ingress controller + `/etc/hosts`)
+- Ingress: `http://uptime-kuma.tpinf.xyz` (Istio ingress in `static/ingress.yaml`)
+
+Set credentials on first login.
 
 ## Uninstall
 
