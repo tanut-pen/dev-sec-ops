@@ -29,7 +29,8 @@ rbac:
         external: true
 
 config:
-  port: 8080
+  # Must be a string — the server TOML field is typed as string (see --port flag).
+  port: "8080"
   log_level: 2
   read_only: true
   stateless: true
