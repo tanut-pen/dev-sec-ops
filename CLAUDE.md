@@ -19,6 +19,8 @@
 | Kong Proxy (HTTP) | http://localhost:30008 | — | — |
 | Postgres | postgresql://localhost:30432 | admin | admin |
 | LiteLLM | http://localhost:30433 | — | — |
+| Ollama Deepseek | http://localhost:30114 | — | — |
+| Ollama Qwen | http://localhost:30115 | — | — |
 | Kubernetes MCP | https://mcp-kube.tpinf.xyz | — | — |
 
 ## MCP Servers (in-cluster)

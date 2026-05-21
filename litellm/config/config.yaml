@@ -12,6 +12,16 @@ model_list:
       model: ollama/mistral
       api_base: http://ollama:11434
 
+  - model_name: deepseek
+    litellm_params:
+      model: ollama/deepseek-r1:1.5b
+      api_base: http://ollama-deepseek.ollama-deepseek.svc.cluster.local:11434
+
+  - model_name: qwen
+    litellm_params:
+      model: ollama/qwen2.5-coder:1.5b
+      api_base: http://ollama-qwen.ollama-qwen.svc.cluster.local:11434
+
 mcp_servers:
   kube_mcp:
     transport: "sse"
