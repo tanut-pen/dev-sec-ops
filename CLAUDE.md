@@ -5,24 +5,6 @@
 
 ## Service Credentials
 
-| Service | URL | Username | Password / Token |
-|---------|-----|----------|-----------------|
-| Jenkins | http://localhost:30003 | admin | admin |
-| SonarQube | http://sonarqube.local | admin | admin |
-| Harbor | http://localhost:30002 | admin | Harbor12345 |
-| DefectDojo | http://localhost:30001 | admin | *(see first-run output)* |
-| Argo CD | http://localhost:30004 | admin | *(see `argocd admin initial-password`)* |
-| Grafana | http://localhost:30005 | admin | prom-operator |
-| Uptime Kuma | http://localhost:30006 | *(set on first login)* | *(set on first login)* |
-| Vault | — | root | *(see init output)* |
-| Kong Admin API | http://localhost:30007 | — | *(no auth by default)* |
-| Kong Proxy (HTTP) | http://localhost:30008 | — | — |
-| Postgres | postgresql://localhost:30432 | admin | admin |
-| LiteLLM | http://localhost:30433 | — | — |
-| Ollama Deepseek | http://localhost:30114 | — | — |
-| Ollama Qwen | http://localhost:30115 | — | — |
-| Kubernetes MCP | https://mcp-kube.tpinf.xyz | — | — |
-
 ## MCP Servers (in-cluster)
 
 | Server | SSE URL |

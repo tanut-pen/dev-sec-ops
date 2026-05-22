@@ -71,25 +71,27 @@ helm show values kong/kong > kong-values.yaml
 
 ## Demo — Kong as an API Gateway
 
-The `demo/` folder contains a complete working example showing Kong's real purpose:
+The `custom_microservice/` folder contains a complete working example showing Kong's real purpose:
 routing, rate-limiting, key authentication, and header injection for microservices.
+These resources are automatically deployed via Argo CD from `custom_microservice/` into the `demo` namespace.
 
 ### Files
 
 | File | Purpose |
 |------|---------|
-| `demo/namespace.yaml` | Creates the `demo` namespace |
-| `demo/echo-app.yaml` | Echo server — reflects requests as JSON |
-| `demo/httpbin-app.yaml` | HTTPBin — standard HTTP testing service |
-| `demo/kong-demo-config.yaml` | Kong deck config with plugins |
+| `custom_microservice/namespace.yaml` | Creates the `demo` namespace |
+| `custom_microservice/echo-app.yaml` | Echo server — reflects requests as JSON |
+| `custom_microservice/httpbin-app.yaml` | HTTPBin — standard HTTP testing service |
+| `custom_microservice/kustomization.yaml` | Kustomize configuration for these services |
+| `kong/demo/kong-demo-config.yaml` | Kong deck config with plugins |
 
 ### Apply (in order)
 
+If deploying manually (instead of using Argo CD):
+
 ```bash
 # 1. Deploy the sample apps
-kubectl apply -f kong/demo/namespace.yaml
-kubectl apply -f kong/demo/echo-app.yaml
-kubectl apply -f kong/demo/httpbin-app.yaml
+kubectl apply -k custom_microservice/
 
 # 2. Wait for pods to be ready
 kubectl get pods -n demo -w
