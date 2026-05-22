@@ -1,27 +1,6 @@
 general_settings:
   store_model_in_db: true
 
-model_list:
-  - model_name: llama3        # name you call it by
-    litellm_params:
-      model: ollama/llama3
-      api_base: http://ollama:11434
-
-  - model_name: mistral
-    litellm_params:
-      model: ollama/mistral
-      api_base: http://ollama:11434
-
-  - model_name: deepseek
-    litellm_params:
-      model: ollama/deepseek-r1:1.5b
-      api_base: http://ollama-deepseek.ollama-deepseek.svc.cluster.local:11434
-
-  - model_name: qwen
-    litellm_params:
-      model: ollama/qwen2.5-coder:1.5b
-      api_base: http://ollama-qwen.ollama-qwen.svc.cluster.local:11434
-
 mcp_servers:
   kube_mcp:
     transport: "sse"
@@ -29,6 +8,3 @@ mcp_servers:
   jenkins_mcp:
     transport: "sse"
     url: "http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse"
-
-
-      
