@@ -1,0 +1,222 @@
+pipeline {
+  agent {
+    kubernetes {
+      yaml '''
+      apiVersion: v1
+      kind: Pod
+      spec:
+        containers:
+        # OWASP ZAP scanner container
+        - name: zap
+          image: ghcr.io/zaproxy/zaproxy:stable
+          command:
+          - cat
+          tty: true
+          # ZAP needs a writable /home/zap and /zap/wrk
+          securityContext:
+            runAsUser: 0
+
+        # Alpine container for curl / DefectDojo import
+        - name: curl
+          image: alpine:latest
+          command:
+          - cat
+          tty: true
+      '''
+    }
+  }
+
+  options {
+    disableConcurrentBuilds()
+    buildDiscarder(logRotator(numToKeepStr: '10'))
+    timestamps()
+  }
+
+  parameters {
+    string(
+      name: 'TARGET_URL',
+      defaultValue: '',
+      description: 'Full URL of the target to scan (e.g. https://example.com). For API mode this should be the OpenAPI/Swagger spec URL.'
+    )
+    choice(
+      name: 'ZAP_MODE',
+      choices: ['baseline', 'full', 'api', 'all'],
+      description: '''Scan mode:
+  baseline – passive scan only, fast (~2 min)
+  full     – active attack scan, thorough (~10–30 min)
+  api      – API/OpenAPI spec scan (TARGET_URL = spec URL)
+  all      – runs baseline + full + api in sequence'''
+    )
+    string(
+      name: 'CONTEXT_FILE',
+      defaultValue: '',
+      description: '(Optional) Path or URL to a ZAP context (.context) file for authenticated scans. Leave empty to skip.'
+    )
+    booleanParam(
+      name: 'IMPORT_TO_DEFECTDOJO',
+      defaultValue: false,
+      description: 'Upload the ZAP JSON report to DefectDojo after the scan'
+    )
+    string(
+      name: 'DEFECTDOJO_ENGAGEMENT_ID',
+      defaultValue: '1',
+      description: 'DefectDojo engagement ID to import findings into (only used when IMPORT_TO_DEFECTDOJO is true)'
+    )
+  }
+
+  environment {
+    DEFECTDOJO_URL      = 'http://defectdojo-django.defectdojo.svc.cluster.local'
+    DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
+    DEFECTDOJO_PRODUCT_NAME = 'zap-dast'
+
+    // ZAP working directory inside the container
+    ZAP_WORK_DIR = '/zap/wrk'
+
+    // Report file names
+    REPORT_HTML = 'zap-report.html'
+    REPORT_JSON = 'zap-report.json'
+  }
+
+  stages {
+
+    // ─── 1. Validate Input ───────────────────────────────────────────────────
+    stage('Validate Input') {
+      steps {
+        script {
+          if (!params.TARGET_URL?.trim()) {
+            error('TARGET_URL is required. Please enter a valid URL and rebuild.')
+          }
+          if (!params.TARGET_URL.startsWith('http://') && !params.TARGET_URL.startsWith('https://')) {
+            error("TARGET_URL must start with http:// or https://. Got: ${params.TARGET_URL}")
+          }
+          echo "Target  : ${params.TARGET_URL}"
+          echo "Mode    : ${params.ZAP_MODE}"
+          echo "Context : ${params.CONTEXT_FILE ?: '(none)'}"
+        }
+      }
+    }
+
+    // ─── 2. ZAP Scan ─────────────────────────────────────────────────────────
+    stage('ZAP Scan') {
+      steps {
+        container('zap') {
+          script {
+
+            // Build the optional context flag
+            def contextFlag = params.CONTEXT_FILE?.trim()
+              ? "-n '${params.CONTEXT_FILE.trim()}'"
+              : ''
+
+            // Helper: run a single ZAP scan mode
+            // Returns the exit code so the caller can decide how to handle it.
+            def runZap = { String mode ->
+              def htmlOut = mode == 'all' ? "zap-${mode}-report.html" : env.REPORT_HTML
+              def jsonOut = mode == 'all' ? "zap-${mode}-report.json" : env.REPORT_JSON
+
+              def cmd
+              switch (mode) {
+                case 'baseline':
+                  cmd = "zap-baseline.py -t '${params.TARGET_URL}' -J '${ZAP_WORK_DIR}/${jsonOut}' -r '${ZAP_WORK_DIR}/${htmlOut}' ${contextFlag} -I"
+                  break
+                case 'full':
+                  cmd = "zap-full-scan.py -t '${params.TARGET_URL}' -J '${ZAP_WORK_DIR}/${jsonOut}' -r '${ZAP_WORK_DIR}/${htmlOut}' ${contextFlag} -I"
+                  break
+                case 'api':
+                  cmd = "zap-api-scan.py -t '${params.TARGET_URL}' -f openapi -J '${ZAP_WORK_DIR}/${jsonOut}' -r '${ZAP_WORK_DIR}/${htmlOut}' ${contextFlag} -I"
+                  break
+                default:
+                  error("Unknown ZAP mode: ${mode}")
+              }
+
+              echo "=== Running ZAP [${mode}] ==="
+              echo "CMD: ${cmd}"
+
+              // Exit code 2 = alerts found (expected). Anything higher is a real error.
+              def rc = sh(script: cmd, returnStatus: true)
+              if (rc > 2) {
+                error("ZAP [${mode}] failed with exit code ${rc}. Check console for details.")
+              }
+              echo "ZAP [${mode}] finished with exit code ${rc} (0 = clean, 2 = alerts found)"
+            }
+
+            // Ensure work dir exists
+            sh "mkdir -p ${ZAP_WORK_DIR}"
+
+            if (params.ZAP_MODE == 'all') {
+              runZap('baseline')
+              runZap('full')
+              runZap('api')
+
+              // Merge: copy the full-scan JSON as the primary report for DefectDojo
+              sh """
+                cp ${ZAP_WORK_DIR}/zap-full-report.json  ${ZAP_WORK_DIR}/${REPORT_JSON}
+                cp ${ZAP_WORK_DIR}/zap-full-report.html  ${ZAP_WORK_DIR}/${REPORT_HTML}
+              """
+            } else {
+              runZap(params.ZAP_MODE)
+            }
+
+            // Copy reports to workspace so archiveArtifacts can find them
+            sh "cp ${ZAP_WORK_DIR}/*.json ${ZAP_WORK_DIR}/*.html . 2>/dev/null || true"
+          }
+        }
+      }
+    }
+
+    // ─── 3. Import to DefectDojo ──────────────────────────────────────────────
+    stage('Import to DefectDojo') {
+      when {
+        expression { return params.IMPORT_TO_DEFECTDOJO }
+      }
+      steps {
+        container('curl') {
+          sh '''
+            apk add -q curl
+
+            RESPONSE=$(curl -sS --connect-timeout 10 -m 120 \
+              -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
+              -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+              -H "Accept: application/json" \
+              -F "scan_type=ZAP Scan" \
+              -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+              -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+              -F "active=true" \
+              -F "verified=false" \
+              -F "close_old_findings=false" \
+              -F "scan_date=$(date +%F)" \
+              -F "minimum_severity=Low" \
+              -F "file=@zap-report.json" \
+              -w "\\nHTTP_STATUS:%{http_code}")
+
+            echo "=== DEFECTDOJO IMPORT RESPONSE ==="
+            echo "$RESPONSE"
+
+            HTTP_CODE=$(echo "$RESPONSE" | grep -o 'HTTP_STATUS:[0-9]*' | cut -d: -f2)
+            if [ "$HTTP_CODE" != "201" ]; then
+              echo "WARNING: DefectDojo returned HTTP ${HTTP_CODE}. Import may have failed."
+            else
+              echo "Import successful (HTTP 201)."
+            fi
+          '''
+        }
+      }
+    }
+  }
+
+  // ─── Post: always archive reports ─────────────────────────────────────────
+  post {
+    always {
+      archiveArtifacts(
+        artifacts: 'zap-report.html,zap-report.json,zap-baseline-report.*,zap-full-report.*,zap-api-report.*',
+        allowEmptyArchive: true
+      )
+      echo "Reports archived. Download from the build's Artifacts section."
+    }
+    success {
+      echo "ZAP scan completed successfully. Check archived reports for findings."
+    }
+    failure {
+      echo "ZAP scan pipeline FAILED. See console output and archived reports for details."
+    }
+  }
+}
