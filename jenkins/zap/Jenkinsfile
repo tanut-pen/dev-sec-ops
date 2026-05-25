@@ -68,8 +68,8 @@ pipeline {
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
     DEFECTDOJO_PRODUCT_NAME = 'zap-dast'
 
-    // ZAP working directory inside the container
-    ZAP_WORK_DIR = '/zap/wrk'
+    // ZAP working directory inside the container (using absolute workspace path)
+    ZAP_WORK_DIR = "${env.WORKSPACE}"
 
     // Report file names
     REPORT_HTML = 'zap-report.html'
@@ -138,9 +138,6 @@ pipeline {
               echo "ZAP [${mode}] finished with exit code ${rc} (0 = clean, 2 = alerts found)"
             }
 
-            // Ensure work dir exists
-            sh "mkdir -p ${ZAP_WORK_DIR}"
-
             if (params.ZAP_MODE == 'all') {
               runZap('baseline')
               runZap('full')
@@ -154,9 +151,6 @@ pipeline {
             } else {
               runZap(params.ZAP_MODE)
             }
-
-            // Copy reports to workspace so archiveArtifacts can find them
-            sh "cp ${ZAP_WORK_DIR}/*.json ${ZAP_WORK_DIR}/*.html . 2>/dev/null || true"
           }
         }
       }
