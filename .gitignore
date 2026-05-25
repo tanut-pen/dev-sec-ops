@@ -24,5 +24,4 @@ secret*.yaml
 .agents/
 skills-lock.json
 .antigravitycli
-package-lock.json
 node_modules
