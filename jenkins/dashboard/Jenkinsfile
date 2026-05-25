@@ -100,32 +100,31 @@ pipeline {
     }
 
     stage('Commit and Push to Git') {
-  steps {
-    container('git') {
-      withCredentials([string(credentialsId: "${env.GIT_CREDENTIALS_ID}", variable: 'GIT_TOKEN')]) {
-        sh """
-          git config --global --add safe.directory ${env.WORKSPACE}
+      steps {
+        container('git') {
+          withCredentials([string(credentialsId: "${env.GIT_CREDENTIALS_ID}", variable: 'GIT_TOKEN')]) {
+            // Scope safe.directory to workspace only
+            sh "git config --global --add safe.directory ${env.WORKSPACE}"
 
-          git config user.name "Jenkins CI"
-          git config user.email "jenkins@tpinf.xyz"
+            sh """
+              git config user.name "Jenkins CI"
+              git config user.email "jenkins@tpinf.xyz"
 
-          git add devops-dashboard/manifests/deployment.yaml
+              # 1. Add and commit local changes first to clean the workspace
+              git add devops-dashboard/manifests/deployment.yaml
+              git diff --cached --quiet && echo "No changes" && exit 0
+              git commit -m "chore(ops): update devops-dashboard image tag to build-${env.BUILD_NUMBER} [skip ci]"
 
-          git diff --cached --quiet && echo "No changes" && exit 0
+              # 2. Pull latest remote commits using rebase now that workspace is clean
+              git pull --rebase origin main
 
-          git commit -m "chore(ops): update devops-dashboard image tag to build-${env.BUILD_NUMBER} [skip ci]"
-
-          git pull --rebase origin main
-
-          git -c credential.helper='!f() {
-            echo "username=x-access-token"
-            echo "password=\$GIT_TOKEN"
-          }; f' push origin HEAD:main
-        """
+              # 3. Push the commit
+              git -c credential.helper='!f() { echo "password=\$GIT_TOKEN"; }; f' push origin HEAD:main
+            """
+          }
+        }
       }
     }
-  }
-}
 
     stage('Argo CD Sync') {
       steps {
