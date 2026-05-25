@@ -51,7 +51,7 @@ pipeline {
     FULL_IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${IMAGE_NAME}:build-${env.BUILD_NUMBER}"
     
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
-    GIT_CREDENTIALS_ID = 'tanut-pen'
+    GIT_CREDENTIALS_ID = 'git-token'
     GIT_REPO_URL = 'https://github.com/tanut-pen/dev-sec-ops.git'
   }
 
@@ -103,22 +103,24 @@ pipeline {
       steps {
         container('git') {
           withCredentials([string(credentialsId: "${env.GIT_CREDENTIALS_ID}", variable: 'GIT_TOKEN')]) {
-            sh '''
-              # Bypass Git directory ownership security checks between root/jenkins users
-              git config --global --add safe.directory '*'
+            // Scope safe.directory to workspace only
+            sh "git config --global --add safe.directory ${env.WORKSPACE}"
 
+            sh """
               git config user.name "Jenkins CI"
               git config user.email "jenkins@tpinf.xyz"
-              
+
+              # Pull latest to avoid non-fast-forward conflicts
+              git pull --rebase origin main
+
               git add devops-dashboard/manifests/deployment.yaml
-              
-              # Commit tag update. Avoid infinite loop by using [skip ci] in commit message
-              git commit -m "chore(ops): update devops-dashboard image tag to build-${BUILD_NUMBER} [skip ci]" || echo "No changes to commit"
-              
-              # Set credentials in origin remote and push using the Secret Text token
-              git remote set-url origin "https://tanut-pen:${GIT_TOKEN}@github.com/tanut-pen/dev-sec-ops.git"
-              git push origin HEAD:main
-            '''
+              git diff --cached --quiet && echo "No changes" && exit 0
+
+              git commit -m "chore(ops): update devops-dashboard image tag to build-${env.BUILD_NUMBER} [skip ci]"
+
+              # Use credentials helper instead of embedding token in URL
+              git -c credential.helper='!f() { echo "password=\$GIT_TOKEN"; }; f' push origin HEAD:main
+            """
           }
         }
       }
