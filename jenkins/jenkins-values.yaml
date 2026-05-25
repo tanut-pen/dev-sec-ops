@@ -551,7 +551,7 @@ controller:
                 }
                 steps {
                   jobDsl {
-                    targets('jenkins/demo/*.groovy\njenkins/zap/*.groovy')
+                    targets('jenkins/**/*.groovy')
                     removedJobAction('DELETE')
                   }
                 }
