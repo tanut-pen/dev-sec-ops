@@ -1,0 +1,22 @@
+# EnvoyFilter to raise Istio ingress gateway's per-connection buffer limit.
+# Docker push sends large blob PUT requests that exceed Envoy's 1 MB default,
+# causing 413 Payload Too Large. Setting a 1 GB limit covers all realistic layer sizes.
+#
+# Apply: kubectl apply -f harbor-envoyfilter.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  name: harbor-max-body-size
+  namespace: istio-system
+spec:
+  workloadSelector:
+    labels:
+      istio: ingressgateway
+  configPatches:
+  - applyTo: LISTENER
+    match:
+      context: GATEWAY
+    patch:
+      operation: MERGE
+      value:
+        per_connection_buffer_limit_bytes: 1073741824  # 1 GB (uint32 safe)

@@ -96,11 +96,8 @@ pipeline {
     APP_NAME = 'getting-started-todo-app'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     REGISTRY_URL = 'harbor.tpinf.xyz'
-    // In-cluster Harbor core service — bypasses Istio ingress to avoid 413 Payload Too Large on large image blobs
-    REGISTRY_PUSH_URL = 'my-harbor-core.harbor.svc.cluster.local'
     REGISTRY_PROJECT = 'lab'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
-    IMAGE_PUSH_NAME = "${REGISTRY_PUSH_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
 
     SONAR_ORGANIZATION = 'tanut-pen'
     SONARQUBE_URL = 'https://sonarcloud.io'
@@ -253,11 +250,9 @@ pipeline {
         container('docker-cli') {
           withCredentials([usernamePassword(credentialsId: "${env.HARBOR_CREDENTIALS_ID}", usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
             sh """
-              # Re-tag for in-cluster push to bypass Istio 413 Payload Too Large on large blobs.
-              docker tag ${IMAGE_NAME} ${IMAGE_PUSH_NAME}
-              echo "${HARBOR_PASS}" | docker login ${REGISTRY_PUSH_URL} -u "${HARBOR_USER}" --password-stdin
-              docker push ${IMAGE_PUSH_NAME}
-              docker logout ${REGISTRY_PUSH_URL}
+              echo "${HARBOR_PASS}" | docker login ${REGISTRY_URL} -u "${HARBOR_USER}" --password-stdin
+              docker push ${IMAGE_NAME}
+              docker logout ${REGISTRY_URL}
             """
           }
         }
