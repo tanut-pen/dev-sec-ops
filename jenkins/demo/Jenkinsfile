@@ -96,8 +96,8 @@ pipeline {
     APP_NAME = 'getting-started-todo-app'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     REGISTRY_URL = 'harbor.tpinf.xyz'
-    // In-cluster Harbor service — bypasses Istio ingress to avoid 413 Payload Too Large on large image blobs
-    REGISTRY_PUSH_URL = 'my-harbor.harbor.svc.cluster.local'
+    // In-cluster Harbor core service — bypasses Istio ingress to avoid 413 Payload Too Large on large image blobs
+    REGISTRY_PUSH_URL = 'my-harbor-core.harbor.svc.cluster.local'
     REGISTRY_PROJECT = 'lab'
     IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
     IMAGE_PUSH_NAME = "${REGISTRY_PUSH_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
