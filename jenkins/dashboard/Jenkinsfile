@@ -102,7 +102,7 @@ pipeline {
     stage('Commit and Push to Git') {
       steps {
         container('git') {
-          withCredentials([usernamePassword(credentialsId: "${env.GIT_CREDENTIALS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+          withCredentials([string(credentialsId: "${env.GIT_CREDENTIALS_ID}", variable: 'GIT_TOKEN')]) {
             sh '''
               # Bypass Git directory ownership security checks between root/jenkins users
               git config --global --add safe.directory '*'
@@ -115,8 +115,8 @@ pipeline {
               # Commit tag update. Avoid infinite loop by using [skip ci] in commit message
               git commit -m "chore(ops): update devops-dashboard image tag to build-${BUILD_NUMBER} [skip ci]" || echo "No changes to commit"
               
-              # Set credentials in origin remote and push using shell-masked variables
-              git remote set-url origin "https://${GIT_USER}:${GIT_PASS}@github.com/tanut-pen/dev-sec-ops.git"
+              # Set credentials in origin remote and push using the Secret Text token
+              git remote set-url origin "https://tanut-pen:${GIT_TOKEN}@github.com/tanut-pen/dev-sec-ops.git"
               git push origin HEAD:main
             '''
           }
