@@ -27,7 +27,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
     targetRevision: HEAD
     path: nginx/overlays/sit
   destination:
@@ -54,7 +54,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
     targetRevision: HEAD
     path: nginx/overlays/uat
   destination:
@@ -85,7 +85,7 @@ spec:
       helm:
         valueFiles:
           - $values/jenkins/jenkins-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -110,7 +110,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
     targetRevision: HEAD
     path: jenkins/mcpserver
   destination:
@@ -143,7 +143,7 @@ spec:
 #       helm:
 #         valueFiles:
 #           - $values/sonarqube/sonarqube-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
 #   destination:
@@ -175,7 +175,7 @@ spec:
         releaseName: my-harbor
         valueFiles:
           - $values/harbor/harbor-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -208,7 +208,7 @@ spec:
       helm:
         valueFiles:
           - $values/defectdojo/defectdojo-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -242,7 +242,7 @@ spec:
         releaseName: argocd
         valueFiles:
           - $values/argocd/values-argocd.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -274,7 +274,7 @@ spec:
         releaseName: argo-rollouts
         valueFiles:
           - $values/argocd/values-rollouts.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -306,7 +306,7 @@ spec:
 #         releaseName: vault
 #         valueFiles:
 #           - $values/vault/vault-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
 #   destination:
@@ -338,7 +338,7 @@ spec:
         releaseName: uptime-kuma
         valueFiles:
           - $values/uptime-kuma/values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -370,7 +370,7 @@ spec:
         releaseName: kong
         valueFiles:
           - $values/kong/kong-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -395,7 +395,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
     targetRevision: HEAD
     path: static
     directory:
@@ -429,7 +429,7 @@ spec:
         releaseName: kubernetes-mcp-server
         valueFiles:
           - $values/kubernetes-mcp-server/values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
@@ -454,7 +454,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
     targetRevision: HEAD
     path: litellm
   destination:
@@ -479,7 +479,7 @@ spec:
   revisionHistoryLimit: 3
   project: default
   source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
     targetRevision: HEAD
     path: custom_microservice
   destination:
@@ -511,7 +511,7 @@ spec:
 #         releaseName: dongtai-iast
 #         valueFiles:
 #           - $values/dongtai/dontai-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#     - repoURL: https://github.com/Iceza5k/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
 #   destination:
@@ -523,3 +523,28 @@ spec:
 #       prune: true
 #     syncOptions:
 #       - CreateNamespace=true
+---
+# ── DevOps Dashboard ──────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: devops-dashboard
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    targetRevision: HEAD
+    path: devops-dashboard/manifests
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
