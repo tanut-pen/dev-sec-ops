@@ -15,13 +15,18 @@ pipeline {
           # ZAP needs a writable /home/zap and /zap/wrk
           securityContext:
             runAsUser: 0
-
+          volumeMounts:
+          - mountPath: /zap/wrk
+            name: zap-wrk-vol
         # Alpine container for curl / DefectDojo import
         - name: curl
           image: alpine:latest
           command:
           - cat
           tty: true
+        volumes:
+        - name: zap-wrk-vol
+          emptyDir: {}
       '''
     }
   }
@@ -68,8 +73,8 @@ pipeline {
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
     DEFECTDOJO_PRODUCT_NAME = 'zap-dast'
 
-    // ZAP working directory inside the container (using absolute workspace path)
-    ZAP_WORK_DIR = "${env.WORKSPACE}"
+    // ZAP working directory inside the container (using mounted emptyDir volume)
+    ZAP_WORK_DIR = '/zap/wrk'
 
     // Report file names
     REPORT_HTML = 'zap-report.html'
@@ -151,6 +156,9 @@ pipeline {
             } else {
               runZap(params.ZAP_MODE)
             }
+
+            // Copy reports to workspace so archiveArtifacts can find them
+            sh "cp ${ZAP_WORK_DIR}/*.json ${ZAP_WORK_DIR}/*.html . 2>/dev/null || true"
           }
         }
       }
