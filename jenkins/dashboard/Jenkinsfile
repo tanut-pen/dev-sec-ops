@@ -104,6 +104,9 @@ pipeline {
         container('git') {
           withCredentials([usernamePassword(credentialsId: "${env.GIT_CREDENTIALS_ID}", usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
             sh """
+              # Bypass Git directory ownership security checks between root/jenkins users
+              git config --global --add safe.directory '*'
+
               git config user.name "Jenkins CI"
               git config user.email "jenkins@tpinf.xyz"
               
