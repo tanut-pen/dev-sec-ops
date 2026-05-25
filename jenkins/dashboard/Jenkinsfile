@@ -26,7 +26,7 @@ pipeline {
         
         # Argo CD CLI container to trigger application sync
         - name: argocd-cli
-          image: argoproj/argocd:v2.10.4
+          image: quay.io/argoproj/argocd:v2.10.4
           command:
           - cat
           tty: true
