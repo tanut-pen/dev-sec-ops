@@ -25,7 +25,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/Iceza5k/dev-sec-ops.git
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
     path: argocd
     directory:

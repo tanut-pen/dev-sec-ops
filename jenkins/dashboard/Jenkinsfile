@@ -52,7 +52,7 @@ pipeline {
     
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
     GIT_CREDENTIALS_ID = 'tanut-pen'
-    GIT_REPO_URL = 'https://github.com/Iceza5k/dev-sec-ops.git'
+    GIT_REPO_URL = 'https://github.com/tanut-pen/dev-sec-ops.git'
   }
 
   stages {
@@ -113,7 +113,7 @@ pipeline {
               git commit -m "chore(ops): update devops-dashboard image tag to build-${env.BUILD_NUMBER} [skip ci]" || echo "No changes to commit"
               
               # Set credentials in origin remote and push
-              git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/Iceza5k/dev-sec-ops.git
+              git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tanut-pen/dev-sec-ops.git
               git push origin HEAD:main
             """
           }
