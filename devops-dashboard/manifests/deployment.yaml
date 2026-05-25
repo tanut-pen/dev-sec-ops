@@ -25,10 +25,12 @@ spec:
         app: devops-dashboard
         app.kubernetes.io/part-of: devsecops-lab
     spec:
+      imagePullSecrets:
+        - name: regcred
       serviceAccountName: devops-dashboard
       containers:
         - name: dashboard
-          image: devops-dashboard:latest
+          image: harbor.tpinf.xyz/lab/devops-dashboard@sha256:529541bf2cdb5e108db754d0b7fb3552e352086037e4fa1ac17ed4d5e8814183
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
