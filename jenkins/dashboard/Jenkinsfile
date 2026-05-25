@@ -110,15 +110,15 @@ pipeline {
               git config user.name "Jenkins CI"
               git config user.email "jenkins@tpinf.xyz"
 
-              # Pull latest to avoid non-fast-forward conflicts
-              git pull --rebase origin main
-
+              # 1. Add and commit local changes first to clean the workspace
               git add devops-dashboard/manifests/deployment.yaml
               git diff --cached --quiet && echo "No changes" && exit 0
-
               git commit -m "chore(ops): update devops-dashboard image tag to build-${env.BUILD_NUMBER} [skip ci]"
 
-              # Use credentials helper instead of embedding token in URL
+              # 2. Pull latest remote commits using rebase now that workspace is clean
+              git pull --rebase origin main
+
+              # 3. Push the commit
               git -c credential.helper='!f() { echo "password=\$GIT_TOKEN"; }; f' push origin HEAD:main
             """
           }
