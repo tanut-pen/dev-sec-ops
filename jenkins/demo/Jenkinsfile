@@ -157,8 +157,7 @@ pipeline {
         --application="${APP_NAME}" \
         --release="${BUILD_NUMBER}" \
         --branch="main" \
-        --output=sonar-report.json \
-        --format=json
+        --output=sonar-report.html
     '''
   }
 }
@@ -182,6 +181,7 @@ pipeline {
           -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
           -H "Accept: application/json" \
           -F "scan_type=SonarQube Scan detailed" \
+          -F "file=@sonar-report.html" \
           -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
           -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
           -F "active=true" \
