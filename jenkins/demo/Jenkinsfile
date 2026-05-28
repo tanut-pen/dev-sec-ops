@@ -82,7 +82,7 @@ pipeline {
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
     DEFECTDOJO_URL = 'https://defectdojo.tpinf.xyz'
-    DEFECTDOJO_ENGAGEMENT_ID = '1'
+    DEFECTDOJO_ENGAGEMENT_ID = '2'
     DEFECTDOJO_PRODUCT_NAME = 'vulnerability-application'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
 
