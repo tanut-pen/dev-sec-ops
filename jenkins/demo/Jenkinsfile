@@ -81,7 +81,7 @@ pipeline {
     SONAR_PROJECT_NAME = 'vulnerability-application'
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
-    DEFECTDOJO_URL = 'http://defectdojo-django.defectdojo.svc.cluster.local'
+    DEFECTDOJO_URL = 'https://defectdojo.tpinf.xyz'
     DEFECTDOJO_ENGAGEMENT_ID = '1'
     DEFECTDOJO_PRODUCT_NAME = 'vulnerability-application'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
@@ -147,7 +147,9 @@ pipeline {
           withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
             sh '''
               apk add -q curl
-              curl -s -u $SONAR_TOKEN: ${SONARQUBE_URL}/api/issues/search?projectKeys=$SONAR_PROJECT_KEY&resolved=false&ps=500 > sonar-report.json
+              curl -s -u "$SONAR_TOKEN:" \
+                  "${SONARQUBE_URL}/api/issues/search?projectKeys=${SONAR_PROJECT_KEY}&resolved=false&ps=500" \
+                  > sonar-report.json
             '''
           }
         }
