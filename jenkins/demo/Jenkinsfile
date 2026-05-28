@@ -108,7 +108,9 @@ pipeline {
     stage('Install Dependencies') {
       steps {
         container('golang') {
-          sh 'go mod download'
+          sh '''
+            GOTOOLCHAIN=auto go mod download
+          '''
         }
       }
     }
