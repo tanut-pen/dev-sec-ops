@@ -92,7 +92,13 @@ pipeline {
     stage('Clone Repository') {
       steps {
         deleteDir()
-        git branch: "${env.REPO_BRANCH}", credentialsId: 'git-token', url: "${env.REPO_URL}"
+        withCredentials([string(credentialsId: 'git-token', variable: 'GIT_TOKEN')]) {
+          script {
+            def authenticatedUrl = env.REPO_URL.replace("https://", "https://${GIT_TOKEN}@")
+            sh "git clone ${authenticatedUrl} ."
+            sh "git checkout ${env.REPO_BRANCH}"
+          }
+        }
       }
     }
 
