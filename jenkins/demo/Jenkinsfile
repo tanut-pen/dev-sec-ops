@@ -157,32 +157,38 @@ pipeline {
     }
 
     stage('Import SonarQube to DefectDojo') {
-      steps {
-        container('curl') {
-          sh '''
-            apk add -q curl
+  steps {
+    container('curl') {
+      sh '''
+        apk add -q curl
 
-            RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
-              -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
-              -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
-              -H "Accept: application/json" \
-              -F "scan_type=SonarQube API Import" \
-              -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
-              -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
-              -F "active=true" \
-              -F "verified=false" \
-              -F "close_old_findings=false" \
-              -F "scan_date=$(date +%F)" \
-              -F "minimum_severity=Info" \
-              -F "file=@sonar-report.json" \
-              -w "\\nHTTP_STATUS:%{http_code}")
+        # Debug: check file exists and has content
+        echo "=== FILE INFO ==="
+        ls -la sonar-report.json
+        echo "=== FILE PREVIEW ==="
+        head -c 500 sonar-report.json
 
-            echo "=== SONARQUBE IMPORT RESPONSE ==="
-            echo "$RESPONSE"
-          '''
-        }
-      }
+        RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
+          -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
+          -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+          -H "Accept: application/json" \
+          -F "scan_type=SonarQube API Import" \
+          -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+          -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+          -F "active=true" \
+          -F "verified=false" \
+          -F "close_old_findings=false" \
+          -F "scan_date=$(date +%F)" \
+          -F "minimum_severity=Info" \
+          -F "file=@sonar-report.json" \
+          -w "\\nHTTP_STATUS:%{http_code}")
+
+        echo "=== SONARQUBE IMPORT RESPONSE ==="
+        echo "$RESPONSE"
+      '''
     }
+  }
+}
 
     // stage('Quality Gate') {
     //   steps {
