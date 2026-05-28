@@ -92,12 +92,15 @@ pipeline {
     stage('Clone Repository') {
       steps {
         deleteDir()
-        withCredentials([string(credentialsId: 'git-token', variable: 'GIT_TOKEN')]) {
-          script {
-            def authenticatedUrl = env.REPO_URL.replace("https://", "https://${GIT_TOKEN}@")
-            sh "git clone ${authenticatedUrl} ."
-            sh "git checkout ${env.REPO_BRANCH}"
-          }
+        withCredentials([usernamePassword(
+          credentialsId: 'git-token',
+          usernameVariable: 'GIT_USER',
+          passwordVariable: 'GIT_TOKEN'
+        )]) {
+          sh '''
+            git clone https://${GIT_USER}:${GIT_TOKEN}@github.com/tanut-pen/vulnerability-application.git .
+            git checkout main
+          '''
         }
       }
     }
