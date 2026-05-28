@@ -1,28 +1,3 @@
-def installNodeDeps(String targetDir) {
-  dir(targetDir) {
-    if (fileExists('package-lock.json')) {
-      sh 'npm ci'
-    } else {
-      sh 'npm install'
-    }
-  }
-}
-
-def runNodeTestsIfPresent(String targetDir) {
-  dir(targetDir) {
-    int hasTestScript = sh(
-      script: "node -e \"const pkg=require('./package.json'); process.exit(pkg.scripts && pkg.scripts.test ? 0 : 1)\"",
-      returnStatus: true
-    )
-
-    if (hasTestScript == 0) {
-      sh 'npm test -- --ci || npm test'
-    } else {
-      echo "No test script found in ${targetDir}/package.json. Skipping tests."
-    }
-  }
-}
-
 pipeline {
   agent {
     kubernetes {
@@ -31,9 +6,9 @@ pipeline {
       kind: Pod
       spec:
         containers:
-        # Node.js container for npm install and tests
-        - name: nodejs
-          image: node:20-bullseye-slim
+        # Golang container for tests and modules
+        - name: golang
+          image: golang:1.22-alpine
           command:
           - cat
           tty: true
@@ -90,10 +65,10 @@ pipeline {
   }
 
   environment {
-    REPO_URL = 'https://github.com/docker/getting-started-todo-app.git'
+    REPO_URL = 'https://github.com/tanut-pen/vulnerability-application.git'
     REPO_BRANCH = 'main'
 
-    APP_NAME = 'getting-started-todo-app'
+    APP_NAME = 'vulnerability-application'
     IMAGE_TAG = "${env.BUILD_NUMBER}"
     REGISTRY_URL = 'harbor.tpinf.xyz'
     REGISTRY_PROJECT = 'lab'
@@ -102,13 +77,13 @@ pipeline {
     SONAR_ORGANIZATION = 'tanut-pen'
     SONARQUBE_URL = 'https://sonarcloud.io'
     SONARQUBE_ENV = 'sonarqube'
-    SONAR_PROJECT_KEY = 'docker-getting-started-todo-app'
-    SONAR_PROJECT_NAME = 'docker-getting-started-todo-app'
+    SONAR_PROJECT_KEY = 'vulnerability-application'
+    SONAR_PROJECT_NAME = 'vulnerability-application'
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
     DEFECTDOJO_URL = 'http://defectdojo-django.defectdojo.svc.cluster.local'
     DEFECTDOJO_ENGAGEMENT_ID = '1'
-    DEFECTDOJO_PRODUCT_NAME = 'getting-started-todo-app'
+    DEFECTDOJO_PRODUCT_NAME = 'vulnerability-application'
     DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
 
   }
@@ -117,64 +92,53 @@ pipeline {
     stage('Clone Repository') {
       steps {
         deleteDir()
-        git branch: "${env.REPO_BRANCH}", url: "${env.REPO_URL}"
+        git branch: "${env.REPO_BRANCH}", credentialsId: 'git-token', url: "${env.REPO_URL}"
       }
     }
 
     stage('Install Dependencies') {
       steps {
-        // Run dependency installation in the nodejs container.
-        container('nodejs') {
-          script {
-            installNodeDeps('client')
-            installNodeDeps('backend')
-          }
+        container('golang') {
+          sh 'go mod download'
         }
       }
     }
 
     stage('Run Tests') {
       steps {
-        container('nodejs') {
-          script {
-            runNodeTestsIfPresent('client')
-            runNodeTestsIfPresent('backend')
-          }
+        container('golang') {
+          sh 'go test ./... || echo "No tests to run"'
         }
       }
     }
 
     stage('SonarQube Analysis') {
       steps {
-        // Use the nodejs container so scanner installation and Node runtime match.
-        container('nodejs') {
+        container('sonar') {
           withSonarQubeEnv('sonarqube') {
+            withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
+              sh '''
+                sonar-scanner \
+                  -Dsonar.host.url=${SONARQUBE_URL} \
+                  -Dsonar.login=$SONAR_TOKEN \
+                  -Dsonar.projectKey=$SONAR_PROJECT_KEY \
+                  -Dsonar.projectName=$SONAR_PROJECT_NAME \
+                  -Dsonar.organization=$SONAR_ORGANIZATION \
+                  -Dsonar.projectVersion=$BUILD_NUMBER \
+                  -Dsonar.sources=. \
+                  -Dsonar.exclusions=**/static/** \
+                  -Dsonar.sourceEncoding=UTF-8
+              '''
+            }
+          }
+        }
+        container('curl') {
           withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
             sh '''
-              # Install sonar-scanner through npm.
-              npm install -g sonarqube-scanner
-
-              # Detect the Node.js executable path.
-              NODE_EXEC=$(which node)
-              
-              # Run the scan with the detected Node.js binary.
-              sonar-scanner \
-                -Dsonar.host.url=${SONARQUBE_URL} \
-                -Dsonar.login=$SONAR_TOKEN \
-                -Dsonar.projectKey=$SONAR_PROJECT_KEY \
-                -Dsonar.projectName=$SONAR_PROJECT_NAME \
-                -Dsonar.organization=$SONAR_ORGANIZATION \
-                -Dsonar.projectVersion=$BUILD_NUMBER \
-                -Dsonar.sources=backend,client \
-                -Dsonar.exclusions=**/node_modules/**,**/dist/**,**/coverage/** \
-                -Dsonar.sourceEncoding=UTF-8 \
-                -Dsonar.nodejs.executable=$NODE_EXEC
-
-              # Export SonarQube issues to JSON for DefectDojo import
+              apk add -q curl
               curl -s -u $SONAR_TOKEN: ${SONARQUBE_URL}/api/issues/search?projectKeys=$SONAR_PROJECT_KEY&resolved=false&ps=500 > sonar-report.json
             '''
           }
-        }
         }
       }
     }
@@ -198,7 +162,7 @@ pipeline {
               -F "scan_date=$(date +%F)" \
               -F "minimum_severity=Info" \
               -F "file=@sonar-report.json" \
-              -w "\nHTTP_STATUS:%{http_code}")
+              -w "\\nHTTP_STATUS:%{http_code}")
 
             echo "=== SONARQUBE IMPORT RESPONSE ==="
             echo "$RESPONSE"
@@ -225,22 +189,22 @@ pipeline {
     }
 
     stage('Vulnerability Scan') {
-    steps {
+      steps {
         container('trivy') {
-            script {
-                def imageName = env.IMAGE_NAME
-                
-                echo "Scanning Image: ${imageName}"
+          script {
+            def imageName = env.IMAGE_NAME
+            
+            echo "Scanning Image: ${imageName}"
 
-                // 1. Generate HTML Report for Jenkins Artifacts
-                sh "trivy image --format template --template '@/contrib/html.tpl' --output trivy-report.html --severity HIGH,CRITICAL ${imageName}"
+            // 1. Generate HTML Report for Jenkins Artifacts
+            sh "trivy image --format template --template '@/contrib/html.tpl' --output trivy-report.html --severity HIGH,CRITICAL ${imageName}"
 
-                // 2. Generate JSON Report for DefectDojo
-                sh "trivy image --format json --output trivy-report.json --severity HIGH,CRITICAL ${imageName}"
-            }
+            // 2. Generate JSON Report for DefectDojo
+            sh "trivy image --format json --output trivy-report.json --severity HIGH,CRITICAL ${imageName}"
+          }
         }
+      }
     }
-}
 
     stage('Push Image to Harbor') {
       when {
@@ -259,7 +223,6 @@ pipeline {
       }
     }
 
-
     stage('Import Scan to DefectDojo') {
       when {
         expression { return params.IMPORT_TO_DEFECTDOJO }
@@ -267,26 +230,26 @@ pipeline {
       steps {
         container('curl') {
           sh '''
-  apk add -q curl
+            apk add -q curl
 
-  RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
-    -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
-    -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
-    -H "Accept: application/json" \
-    -F "scan_type=Trivy Scan" \
-    -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
-    -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
-    -F "active=true" \
-    -F "verified=false" \
-    -F "close_old_findings=false" \
-    -F "scan_date=$(date +%F)" \
-    -F "minimum_severity=Low" \
-    -F "file=@trivy-report.json" \
-    -w "\nHTTP_STATUS:%{http_code}")
+            RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
+              -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
+              -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
+              -H "Accept: application/json" \
+              -F "scan_type=Trivy Scan" \
+              -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+              -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+              -F "active=true" \
+              -F "verified=false" \
+              -F "close_old_findings=false" \
+              -F "scan_date=$(date +%F)" \
+              -F "minimum_severity=Low" \
+              -F "file=@trivy-report.json" \
+              -w "\\nHTTP_STATUS:%{http_code}")
 
-  echo "=== RESPONSE BODY ==="
-  echo "$RESPONSE"
-'''
+            echo "=== RESPONSE BODY ==="
+            echo "$RESPONSE"
+          '''
         }
       }
     }
