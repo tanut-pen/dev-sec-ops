@@ -144,15 +144,24 @@ pipeline {
           }
         }
         container('curl') {
-          withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
-            sh '''
-              apk add -q curl
-              curl -s -u "$SONAR_TOKEN:" \
-              "${SONARQUBE_URL}/api/issues/search?projectKeys=${SONAR_PROJECT_KEY}&resolved=false&ps=500" \
-              > sonar-report.json
-            '''
-          }
-        }
+  withCredentials([string(credentialsId: 'sonar', variable: 'SONAR_TOKEN')]) {
+    sh '''
+      apk add -q curl nodejs npm
+      npm install -g sonar-report
+      sonar-report \
+        --sonarurl="${SONARQUBE_URL}" \
+        --sonartoken="${SONAR_TOKEN}" \
+        --sonarorganization="${SONAR_ORGANIZATION}" \
+        --sonarcomponent="${SONAR_PROJECT_KEY}" \
+        --project="${SONAR_PROJECT_NAME}" \
+        --application="${APP_NAME}" \
+        --release="${BUILD_NUMBER}" \
+        --branch="main" \
+        --output=sonar-report.json \
+        --format=json
+    '''
+  }
+}
       }
     }
 
