@@ -1,5 +1,4 @@
-def run() {
-    pipeline {
+pipeline {
         agent {
             kubernetes {
                 yamlFile 'jenkins/demo/pod.yaml'
@@ -214,6 +213,5 @@ def run() {
                 archiveArtifacts artifacts: 'trivy-report.json,trivy-report.html,sonar-report.html', allowEmptyArchive: true
             }
         }
-    }
 }
-return this
+
