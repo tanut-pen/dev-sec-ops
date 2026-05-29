@@ -172,9 +172,9 @@ pipeline {
 
         # Debug: check file exists and has content
         echo "=== FILE INFO ==="
-        ls -la sonar-report.json
+        ls -la sonar-report.html
         echo "=== FILE PREVIEW ==="
-        head -c 500 sonar-report.json
+        head -c 500 sonar-report.html
 
         RESPONSE=$(curl -sS --connect-timeout 10 -m 60 \
           -X POST "${DEFECTDOJO_URL}/api/v2/import-scan/" \
@@ -189,7 +189,7 @@ pipeline {
           -F "close_old_findings=false" \
           -F "scan_date=$(date +%F)" \
           -F "minimum_severity=Info" \
-          -F "file=@sonar-report.json" \
+          -F "file=@sonar-report.html" \
           -w "\\nHTTP_STATUS:%{http_code}")
 
         echo "=== SONARQUBE IMPORT RESPONSE ==="
