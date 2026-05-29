@@ -285,7 +285,7 @@ pipeline {
 
   post {
     always {
-      archiveArtifacts artifacts: 'trivy-report.json,sonar-report.json', allowEmptyArchive: true
+      archiveArtifacts artifacts: 'trivy-report.json,trivy-report.html,sonar-report.html', allowEmptyArchive: true
     }
   }
 }
