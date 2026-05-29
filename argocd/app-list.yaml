@@ -548,3 +548,28 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+---
+# ── Vulnerability Application ───────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vulnerability-application
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    targetRevision: HEAD
+    path: vulnerability-application
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true

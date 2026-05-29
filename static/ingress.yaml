@@ -149,3 +149,22 @@ spec:
             name: devops-dashboard
             port:
               number: 3000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: vulnerability-application-ingress
+  namespace: monitoring
+spec:
+  ingressClassName: istio
+  rules:
+  - host: vulnerability-app.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: vulnerability-application
+            port:
+              number: 8080
