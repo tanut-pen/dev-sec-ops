@@ -77,7 +77,7 @@ pipeline {
     SONAR_ORGANIZATION = 'tanut-pen'
     SONARQUBE_URL = 'https://sonarcloud.io'
     SONARQUBE_ENV = 'sonarqube'
-    SONAR_PROJECT_KEY = 'vulnerability-application'
+    SONAR_PROJECT_KEY = 'tanut-pen_vulnerability-application'  // if that's the real key
     SONAR_PROJECT_NAME = 'vulnerability-application'
 
     HARBOR_CREDENTIALS_ID = 'harbor-credentials'
