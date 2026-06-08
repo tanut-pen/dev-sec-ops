@@ -29,7 +29,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: nginx/overlays/sit
+    path: apps/nginx/overlays/sit
   destination:
     server: https://kubernetes.default.svc
     namespace: nginx-sit
@@ -56,7 +56,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: nginx/overlays/uat
+    path: apps/nginx/overlays/uat
   destination:
     server: https://kubernetes.default.svc
     namespace: nginx-uat
@@ -84,7 +84,7 @@ spec:
       targetRevision: "*"
       helm:
         valueFiles:
-          - $values/jenkins/jenkins-values.yaml
+          - $values/apps/jenkins/jenkins-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
@@ -112,7 +112,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: jenkins/mcpserver
+    path: apps/jenkins/mcpserver
   destination:
     server: https://kubernetes.default.svc
     namespace: jenkins
@@ -142,7 +142,7 @@ spec:
 #       targetRevision: "*"
 #       helm:
 #         valueFiles:
-#           - $values/sonarqube/sonarqube-values.yaml
+#           - $values/apps/sonarqube/sonarqube-values.yaml
 #     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
@@ -174,7 +174,7 @@ spec:
       helm:
         releaseName: my-harbor
         valueFiles:
-          - $values/harbor/harbor-values.yaml
+          - $values/apps/harbor/harbor-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
@@ -207,7 +207,7 @@ spec:
       targetRevision: "*"
       helm:
         valueFiles:
-          - $values/defectdojo/defectdojo-values.yaml
+          - $values/apps/defectdojo/defectdojo-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
@@ -305,7 +305,7 @@ spec:
 #       helm:
 #         releaseName: vault
 #         valueFiles:
-#           - $values/vault/vault-values.yaml
+#           - $values/apps/vault/vault-values.yaml
 #     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
@@ -337,7 +337,7 @@ spec:
       helm:
         releaseName: uptime-kuma
         valueFiles:
-          - $values/uptime-kuma/values.yaml
+          - $values/apps/uptime-kuma/values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
@@ -369,7 +369,7 @@ spec:
       helm:
         releaseName: kong
         valueFiles:
-          - $values/kong/kong-values.yaml
+          - $values/apps/kong/kong-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
@@ -428,7 +428,7 @@ spec:
       helm:
         releaseName: kubernetes-mcp-server
         valueFiles:
-          - $values/kubernetes-mcp-server/values.yaml
+          - $values/apps/kubernetes-mcp-server/values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
@@ -456,7 +456,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: litellm
+    path: apps/litellm
   destination:
     server: https://kubernetes.default.svc
     namespace: litellm
@@ -481,7 +481,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: custom_microservice
+    path: apps/custom_microservice
   destination:
     server: https://kubernetes.default.svc
     namespace: demo
@@ -510,7 +510,7 @@ spec:
 #       helm:
 #         releaseName: dongtai-iast
 #         valueFiles:
-#           - $values/dongtai/dontai-values.yaml
+#           - $values/apps/dongtai/dontai-values.yaml
 #     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
 #       targetRevision: HEAD
 #       ref: values
@@ -538,7 +538,7 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: vulnerability-application
+    path: apps/vulnerability-application
   destination:
     server: https://kubernetes.default.svc
     namespace: monitoring

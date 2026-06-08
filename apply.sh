@@ -8,4 +8,4 @@ set -e
 kubectl apply -f argocd/app-of-apps.yaml
 
 #apply postgres
-./postgres/install.sh
+./apps/postgres/install.sh

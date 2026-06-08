@@ -2,7 +2,7 @@ def run() {
     pipeline {
         agent {
             kubernetes {
-                yamlFile 'jenkins/demo/pod.yaml'
+                yamlFile 'apps/jenkins/demo/pod.yaml'
             }
         }
 

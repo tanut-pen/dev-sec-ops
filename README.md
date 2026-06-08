@@ -28,79 +28,35 @@ The stack in this repo includes:
 
 ```text
 .
-├── k3d/
-│   ├── start.sh
-│   └── readme.md
-├── ingress.yaml
-├── CLAUDE.md
-├── jenkins/
-│   ├── install.sh
-│   ├── jenkins-values.yaml
-│   ├── readme.md
-│   └── demo/
-│       ├── Jenkinsfile
-│       ├── jobs.groovy
-│       └── seed-job.groovy
-├── sonarqube/
-│   ├── install.sh
-│   ├── values-sonar.yaml
-│   └── readme.md
-├── harbor/
-│   ├── install.sh
-│   ├── harbor-local.yaml
-│   └── readme.md
-├── defectdojo/
-│   ├── install.sh
-│   ├── values-dojo.yaml
-│   └── readme.md
-├── argocd/
-│   ├── install.sh
-│   ├── values-argocd.yaml
-│   ├── values-rollouts.yaml
-│   └── readme.md
-├── istio/
-│   ├── install.sh
-│   ├── base-values.yaml
-│   ├── istiod-values.yaml
-│   ├── gateway-values.yaml
-│   └── readme.md
-├── grafana/
-│   ├── install.sh
-│   ├── values-grafana.yaml
-│   └── readme.md
-├── grafana-alloy/
-│   ├── install.sh
-│   ├── values.yaml
-│   └── readme.md
-├── vault/
-│   ├── install.sh
-│   └── vault-values.yaml
-├── uptime-kuma/
-│   ├── install.sh
-│   ├── values.yaml
-│   └── readme.md
-├── portainer/
-│   ├── install.sh
-│   └── values.yaml
-├── kubeseal/
-│   └── install.sh
-├── gitlab/
-│   └── install.sh
-├── kong/
-│   ├── install.sh
-│   ├── kong-values.yaml
-│   ├── kong-config.yaml
-│   └── readme.md
-├── postgres/
-│   ├── install.sh
-│   ├── values.yaml
-│   └── readme.md
-├── litellm/
-│   ├── install.sh
-│   ├── deployment.yaml
-│   └── readme.md
-└── lab/
-    └── ACME/
+├── apps/                  # Application and service deployments
+│   ├── alpine/
+│   ├── custom_microservice/
+│   ├── defectdojo/
+│   ├── grafana/
+│   ├── grafana-alloy/
+│   ├── harbor/
+│   ├── istio/
+│   ├── jenkins/
+│   ├── kong/
+│   ├── kubernetes-mcp-server/
+│   ├── kubeseal/
+│   ├── litellm/
+│   ├── mysql/
+│   ├── nginx/
+│   ├── ollama-deepseek/
+│   ├── ollama-qwen/
+│   ├── portainer/
+│   ├── postgres/
+│   ├── sonarqube/
+│   ├── uptime-kuma/
+│   ├── vault/
+│   └── vulnerability-application/
+├── argocd/                # Argo CD bootstrap and control plane config
+│   ├── app-list.yaml      # Argo CD Application list
+│   └── app-of-apps.yaml   # Root app-of-apps bootstrap Application
+├── static/                # Cluster-wide static resources (Ingresses, RBAC)
+├── CLAUDE.md              # Token & credential reference
+└── apply.sh               # Bootstrap script
 ```
 
 ## What This Project Does
@@ -148,7 +104,7 @@ Creates a cluster named `my-cluster` with:
 ### 2. Install Jenkins
 
 ```bash
-cd jenkins
+cd apps/jenkins
 ./install.sh
 ```
 
@@ -160,7 +116,7 @@ cd jenkins
 ### 3. Install SonarQube
 
 ```bash
-cd sonarqube
+cd apps/sonarqube
 ./install.sh
 ```
 
@@ -172,7 +128,7 @@ cd sonarqube
 ### 4. Install Harbor
 
 ```bash
-cd harbor
+cd apps/harbor
 ./install.sh
 ```
 
@@ -184,7 +140,7 @@ cd harbor
 ### 5. Install DefectDojo
 
 ```bash
-cd defectdojo
+cd apps/defectdojo
 ./install.sh
 ```
 
@@ -208,7 +164,7 @@ cd argocd
 ### 7. Install Istio
 
 ```bash
-cd istio
+cd apps/istio
 ./install.sh
 ```
 
@@ -222,7 +178,7 @@ cd istio
 ### 8. Install Grafana Stack
 
 ```bash
-cd grafana
+cd apps/grafana
 ./install.sh
 ```
 
@@ -236,7 +192,7 @@ cd grafana
 ### 9. Install Grafana Alloy
 
 ```bash
-cd grafana-alloy
+cd apps/grafana-alloy
 ./install.sh
 ```
 
@@ -248,7 +204,7 @@ cd grafana-alloy
 ### 10. Install Vault
 
 ```bash
-cd vault
+cd apps/vault
 ./install.sh
 ```
 
@@ -260,7 +216,7 @@ cd vault
 ### 11. Install Uptime Kuma
 
 ```bash
-cd uptime-kuma
+cd apps/uptime-kuma
 ./install.sh
 ```
 
@@ -273,7 +229,7 @@ cd uptime-kuma
 ### 12. Install Portainer
 
 ```bash
-cd portainer
+cd apps/portainer
 ./install.sh
 ```
 
@@ -286,7 +242,7 @@ cd portainer
 ### 13. Install Kubeseal (Sealed Secrets)
 
 ```bash
-cd kubeseal
+cd apps/kubeseal
 ./install.sh
 ```
 
@@ -297,7 +253,7 @@ cd kubeseal
 ### 14. Install Kong Gateway
 
 ```bash
-cd kong
+cd apps/kong
 ./install.sh
 ```
 
@@ -312,7 +268,7 @@ cd kong
 ### 15. Install GitLab *(optional)*
 
 ```bash
-cd gitlab
+cd apps/gitlab
 ./install.sh
 ```
 
@@ -322,7 +278,7 @@ cd gitlab
 
 ## Ingress Rules (`ingress.yaml`)
 
-The `ingress.yaml` at the repo root defines rules for:
+The `ingress.yaml` under the `static/` directory defines rules for:
 
 - `jenkins.tpinf.xyz` → `jenkins:8080`
 - `argocd.local` → `argocd-server:80`
@@ -334,7 +290,7 @@ The `ingress.yaml` at the repo root defines rules for:
 Apply with:
 
 ```bash
-kubectl apply -f ingress.yaml
+kubectl apply -f static/ingress.yaml
 ```
 
 ## Credentials Reference
@@ -394,21 +350,23 @@ https://github.com/docker/getting-started-todo-app.git
 ```bash
 ./k3d/start.sh
 
-cd kubeseal && ./install.sh
-cd ../harbor && ./install.sh
-cd ../sonarqube && ./install.sh
-cd ../defectdojo && ./install.sh
-cd ../jenkins && ./install.sh
-cd ../argocd && ./install.sh
-cd ../grafana && ./install.sh
-cd ../vault && ./install.sh
-cd ../uptime-kuma && ./install.sh
-cd ../postgres && ./install.sh
-cd ../litellm && ./install.sh
-cd ../portainer && ./install.sh
-cd ../kong && ./install.sh
+# Install applications and controllers from the repository root
+./apps/kubeseal/install.sh
+./apps/harbor/install.sh
+./apps/sonarqube/install.sh
+./apps/defectdojo/install.sh
+./apps/jenkins/install.sh
+./argocd/install.sh
+./apps/grafana/install.sh
+./apps/vault/install.sh
+./apps/uptime-kuma/install.sh
+./apps/postgres/install.sh
+./apps/litellm/install.sh
+./apps/portainer/install.sh
+./apps/kong/install.sh
 
-kubectl apply -f ingress.yaml
+# Apply shared ingress configuration
+kubectl apply -f static/ingress.yaml
 ```
 
 ## Summary

@@ -40,5 +40,5 @@ helm repo update
 ## Notes
 
 - Jenkins `install.sh` line 3 contains a generated string — safe to ignore in this local lab.
-- SonarQube token is stored in `sonarqube/token.md` locally.
+- SonarQube token is stored in `apps/sonarqube/token.md` locally.
 - Vault root token is printed during `vault operator init` — save it immediately.

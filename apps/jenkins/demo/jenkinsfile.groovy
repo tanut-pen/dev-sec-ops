@@ -22,7 +22,7 @@ pipelineJob('devsecops-demo-pipeline') {
           branch('*/main')
         }
       }
-      scriptPath('jenkins/demo/Jenkinsfile')
+      scriptPath('apps/jenkins/demo/Jenkinsfile')
       lightweight(true)
     }
   }

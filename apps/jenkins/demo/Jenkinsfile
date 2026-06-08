@@ -6,5 +6,5 @@ properties([
 ])
 
 // Load and run the pipeline logic from the library script
-def pipelineLib = load 'jenkins/lib/pipeline.groovy'
+def pipelineLib = load 'apps/jenkins/lib/pipeline.groovy'
 pipelineLib.run()

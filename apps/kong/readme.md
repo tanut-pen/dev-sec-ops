@@ -17,7 +17,7 @@ This install uses **DB-less mode** (no PostgreSQL required). Routes and services
 ## Install
 
 ```bash
-cd kong
+cd apps/kong
 ./install.sh
 ```
 
@@ -71,19 +71,19 @@ helm show values kong/kong > kong-values.yaml
 
 ## Demo — Kong as an API Gateway
 
-The `custom_microservice/` folder contains a complete working example showing Kong's real purpose:
+The `apps/custom_microservice/` folder contains a complete working example showing Kong's real purpose:
 routing, rate-limiting, key authentication, and header injection for microservices.
-These resources are automatically deployed via Argo CD from `custom_microservice/` into the `demo` namespace.
+These resources are automatically deployed via Argo CD from `apps/custom_microservice/` into the `demo` namespace.
 
 ### Files
 
 | File | Purpose |
 |------|---------|
-| `custom_microservice/namespace.yaml` | Creates the `demo` namespace |
-| `custom_microservice/echo-app.yaml` | Echo server — reflects requests as JSON |
-| `custom_microservice/httpbin-app.yaml` | HTTPBin — standard HTTP testing service |
-| `custom_microservice/kustomization.yaml` | Kustomize configuration for these services |
-| `kong/demo/kong-demo-config.yaml` | Kong deck config with plugins |
+| `apps/custom_microservice/namespace.yaml` | Creates the `demo` namespace |
+| `apps/custom_microservice/echo-app.yaml` | Echo server — reflects requests as JSON |
+| `apps/custom_microservice/httpbin-app.yaml` | HTTPBin — standard HTTP testing service |
+| `apps/custom_microservice/kustomization.yaml` | Kustomize configuration for these services |
+| `apps/kong/demo/kong-demo-config.yaml` | Kong deck config with plugins |
 
 ### Apply (in order)
 
@@ -91,14 +91,14 @@ If deploying manually (instead of using Argo CD):
 
 ```bash
 # 1. Deploy the sample apps
-kubectl apply -k custom_microservice/
+kubectl apply -k apps/custom_microservice/
 
 # 2. Wait for pods to be ready
 kubectl get pods -n demo -w
 
 # 3. Push config to Kong (DB-less sync)
 curl -X POST http://localhost:31313/config \
-  -F config=@kong/demo/kong-demo-config.yaml
+  -F config=@apps/kong/demo/kong-demo-config.yaml
 ```
 
 ### Routes configured
@@ -144,7 +144,7 @@ curl http://localhost:30008/secure/get -H "apikey: my-secret-api-key"
 ```bash
 # Apply demo config to Kong
 curl -X POST http://localhost:31313/config \
-  -F config=@kong/demo/kong-demo-config.yaml
+  -F config=@apps/kong/demo/kong-demo-config.yaml
 
 # Preview changes (diff)
 deck gateway diff kong-config.yaml --kong-addr http://localhost:31313

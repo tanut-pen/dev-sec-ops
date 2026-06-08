@@ -25,7 +25,7 @@ pipelineJob('zap-scan-pipeline') {
           branch('*/main')
         }
       }
-      scriptPath('jenkins/zap/Jenkinsfile')
+      scriptPath('apps/jenkins/zap/Jenkinsfile')
       lightweight(true)
     }
   }
