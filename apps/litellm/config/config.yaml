@@ -1,8 +1,8 @@
-model_list:
-  - model_name: qwen3-0.6b
-    litellm_params:
-      model: ollama/qwen3:0.6b
-      api_base: http://ollama.ollama.svc.cluster.local:11434
+# model_list:
+#   - model_name: qwen3-0.6b
+#     litellm_params:
+#       model: ollama/qwen3:0.6b
+#       api_base: http://ollama.ollama.svc.cluster.local:11434
 
 general_settings:
   store_model_in_db: true
