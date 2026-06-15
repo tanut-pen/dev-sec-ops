@@ -548,3 +548,28 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+---
+# ── Ollama (Local LLM Server) ────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: ollama
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    targetRevision: HEAD
+    path: apps/ollama
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: ollama
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
