@@ -6,7 +6,7 @@ namespace: jenkins
 resources:
   # - secret.yaml
   - deployment.yaml
-  - ingress.yaml
+  # ingress is managed under static/
 
 labels:
   - pairs:

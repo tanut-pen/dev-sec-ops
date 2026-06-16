@@ -1,0 +1,67 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mcp-atlassian
+  namespace: atlassian
+  labels:
+    app.kubernetes.io/name: mcp-atlassian
+    app.kubernetes.io/component: mcp-server
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: mcp-atlassian
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: mcp-atlassian
+        app.kubernetes.io/component: mcp-server
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+      containers:
+        - name: mcp-atlassian
+          image: mcp/atlassian:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 9887
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 30
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mcp-atlassian
+  namespace: atlassian
+  labels:
+    app.kubernetes.io/name: mcp-atlassian
+    app.kubernetes.io/component: mcp-server
+spec:
+  type: NodePort
+  selector:
+    app.kubernetes.io/name: mcp-atlassian
+  ports:
+    - name: http
+      port: 9887
+      targetPort: http
+      nodePort: 30435

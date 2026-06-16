@@ -168,3 +168,41 @@ spec:
             name: rabbitmq
             port:
               number: 15672
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-jenkins-ingress
+  namespace: jenkins
+spec:
+  ingressClassName: istio
+  rules:
+  - host: mcp-jenkins.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-jenkins
+            port:
+              number: 9887
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: mcp-atlassian-ingress
+  namespace: atlassian
+spec:
+  ingressClassName: istio
+  rules:
+  - host: mcp-atlassian.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: mcp-atlassian
+            port:
+              number: 9887

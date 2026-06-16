@@ -112,7 +112,31 @@ spec:
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: apps/jenkins/mcpserver
+    path: apps/mcpserver/deployment/jenkins-mcp
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: atlassian
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+# ── Atlassian MCP Server (mcp-atlassian) ─────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: atlassian-mcp
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  source:
+    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+    targetRevision: HEAD
+    path: apps/mcpserver/deployment/atlassian-mcp
   destination:
     server: https://kubernetes.default.svc
     namespace: jenkins
