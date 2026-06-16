@@ -573,3 +573,36 @@ spec:
 #       prune: true
 #     syncOptions:
 #       - CreateNamespace=true
+---
+# ── RabbitMQ ──────────────────────────────────────────────────────────────────
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: rabbitmq
+  namespace: argocd
+  labels:
+    app.kubernetes.io/part-of: devsecops-lab
+spec:
+  revisionHistoryLimit: 3
+  project: default
+  sources:
+    - repoURL: https://charts.bitnami.com/bitnami
+      chart: rabbitmq
+      targetRevision: "*"
+      helm:
+        releaseName: rabbitmq
+        valueFiles:
+          - $values/apps/rabbitmq/rabbitmq-values.yaml
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: HEAD
+      ref: values
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: rabbitmq
+  syncPolicy:
+    automated:
+      selfHeal: true
+      prune: true
+    syncOptions:
+      - CreateNamespace=true
+
