@@ -1,0 +1,25 @@
+---
+tempo:
+  # Monolithic storage configuration (uses local filesystem)
+  storage:
+    trace:
+      backend: local
+      local:
+        path: /var/tempo/traces
+      wal:
+        path: /var/tempo/wal
+
+  # Enable OTLP receivers in the distributor block
+  distributor:
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+
+  # Persistence configuration for trace data
+  persistence:
+    enabled: true
+    size: 5Gi

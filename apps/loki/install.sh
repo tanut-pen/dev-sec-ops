@@ -4,7 +4,7 @@ set -euo pipefail
 helm repo add grafana https://grafana.github.io/helm-charts --force-update
 helm repo update
 
-helm upgrade --install grafana-alloy grafana/alloy \
-  --namespace grafana-alloy \
+helm upgrade --install loki grafana/loki \
+  --namespace loki \
   --create-namespace \
-  -f alloy-values.yaml
+  -f loki-values.yaml
