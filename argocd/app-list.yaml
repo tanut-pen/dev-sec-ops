@@ -540,6 +540,7 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 # ── Grafana Alloy ─────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
@@ -572,6 +573,7 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 # ── Grafana Loki ──────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
@@ -604,6 +606,7 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
 # ── Grafana Tempo ─────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
@@ -636,4 +639,5 @@ spec:
       prune: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
 ---
