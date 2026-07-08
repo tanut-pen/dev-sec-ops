@@ -26,6 +26,13 @@ spec:
         - name: mcp-atlassian
           image: mcp/atlassian:latest
           imagePullPolicy: IfNotPresent
+          env:
+            - name: FASTMCP_TRANSPORT
+              value: "sse"
+            - name: FASTMCP_PORT
+              value: "9887"
+            - name: FASTMCP_HOST
+              value: "0.0.0.0"
           ports:
             - name: http
               containerPort: 9887
