@@ -5,7 +5,7 @@ namespace: jenkins
 
 resources:
   # - secret.yaml
-  - deployment.yaml
+  - deployment/jenkins-mcp/deployment.yaml
   # ingress is managed under static/
 
 labels:

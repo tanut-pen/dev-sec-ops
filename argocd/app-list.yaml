@@ -115,13 +115,14 @@ spec:
     path: apps/mcpserver/deployment/jenkins-mcp
   destination:
     server: https://kubernetes.default.svc
-    namespace: atlassian
+    namespace: jenkins
   syncPolicy:
     automated:
       selfHeal: true
       prune: true
     syncOptions:
       - CreateNamespace=true
+---
 # ── Atlassian MCP Server (mcp-atlassian) ─────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
@@ -139,7 +140,7 @@ spec:
     path: apps/mcpserver/deployment/atlassian-mcp
   destination:
     server: https://kubernetes.default.svc
-    namespace: jenkins
+    namespace: mcp-atlassian
   syncPolicy:
     automated:
       selfHeal: true

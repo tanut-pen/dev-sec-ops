@@ -14,3 +14,6 @@ mcp_servers:
   jenkins_mcp:
     transport: "sse"
     url: "http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse"
+  atlassian_mcp:
+    transport: "sse"
+    url: "http://mcp-atlassian.mcp-atlassian.svc.cluster.local:9887/sse"
