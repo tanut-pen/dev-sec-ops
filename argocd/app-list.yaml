@@ -528,13 +528,13 @@ spec:
       helm:
         releaseName: grafana
         valueFiles:
-          - $values/apps/grafana/values-grafana.yaml
+          - $values/apps/monitoring/values-grafana.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: grafana
+    namespace: monitoring
   syncPolicy:
     automated:
       selfHeal: true
@@ -561,13 +561,13 @@ spec:
       helm:
         releaseName: grafana-alloy
         valueFiles:
-          - $values/apps/grafana-alloy/alloy-values.yaml
+          - $values/apps/monitoring/alloy-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: grafana-alloy
+    namespace: monitoring
   syncPolicy:
     automated:
       selfHeal: true
@@ -627,13 +627,13 @@ spec:
       helm:
         releaseName: tempo
         valueFiles:
-          - $values/apps/tempo/tempo-values.yaml
+          - $values/apps/monitoring/tempo-values.yaml
     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
       targetRevision: HEAD
       ref: values
   destination:
     server: https://kubernetes.default.svc
-    namespace: tempo
+    namespace: monitoring
   syncPolicy:
     automated:
       selfHeal: true
