@@ -1,0 +1,132 @@
+# # ── Grafana Stack ─────────────────────────────────────────────────────────────
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: grafana
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://prometheus-community.github.io/helm-charts
+#       chart: kube-prometheus-stack
+#       targetRevision: "*"
+#       helm:
+#         releaseName: grafana
+#         valueFiles:
+#           - $values/apps/monitoring/values-grafana.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: monitoring
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
+#       - ServerSideApply=true
+# ---
+# # ── Grafana Alloy ─────────────────────────────────────────────────────────────
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: grafana-alloy
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://grafana.github.io/helm-charts
+#       chart: alloy
+#       targetRevision: "*"
+#       helm:
+#         releaseName: grafana-alloy
+#         valueFiles:
+#           - $values/apps/monitoring/alloy-values.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: monitoring
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
+#       - ServerSideApply=true
+# ---
+# # ── Grafana Loki ──────────────────────────────────────────────────────────────
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: loki
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://grafana.github.io/helm-charts
+#       chart: loki
+#       targetRevision: "*"
+#       helm:
+#         releaseName: loki
+#         valueFiles:
+#           - $values/apps/loki/loki-values.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: loki
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
+#       - ServerSideApply=true
+# ---
+# # ── Grafana Tempo ─────────────────────────────────────────────────────────────
+# apiVersion: argoproj.io/v1alpha1
+# kind: Application
+# metadata:
+#   name: tempo
+#   namespace: argocd
+#   labels:
+#     app.kubernetes.io/part-of: devsecops-lab
+# spec:
+#   revisionHistoryLimit: 3
+#   project: default
+#   sources:
+#     - repoURL: https://grafana.github.io/helm-charts
+#       chart: tempo
+#       targetRevision: "*"
+#       helm:
+#         releaseName: tempo
+#         valueFiles:
+#           - $values/apps/monitoring/tempo-values.yaml
+#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+#       targetRevision: HEAD
+#       ref: values
+#   destination:
+#     server: https://kubernetes.default.svc
+#     namespace: monitoring
+#   syncPolicy:
+#     automated:
+#       selfHeal: true
+#       prune: true
+#     syncOptions:
+#       - CreateNamespace=true
+#       - ServerSideApply=true
+# ---

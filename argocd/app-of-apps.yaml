@@ -29,8 +29,7 @@ spec:
     targetRevision: HEAD
     path: argocd
     directory:
-      # Only process the app-list.yaml file in this directory
-      include: "app-list.yaml"
+      include: "app-list-*.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
