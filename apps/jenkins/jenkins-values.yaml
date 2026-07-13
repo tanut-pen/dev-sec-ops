@@ -424,7 +424,7 @@ controller:
     - kubernetes:4423.vb_59f230b_ce53
     - workflow-aggregator:608.v67378e9d3db_1
     - git:5.10.1
-    - configuration-as-code:2077.v41f1011a_5110
+    - configuration-as-code:2100.vb_fd699d2a_09c
     - sonar:2.18.2
     - groovy:537.v741a_5a_f1b_581
 
