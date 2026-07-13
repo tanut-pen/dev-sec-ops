@@ -1,25 +1,6 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: harbor-ingress
-  namespace: harbor
-spec:
-  
-  rules:
-  - host: harbor.tpinf.xyz
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: my-harbor-portal
-            port:
-              number: 80
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
   name: jenkins-ingress
   namespace: jenkins
 spec:
