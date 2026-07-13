@@ -4,7 +4,7 @@ metadata:
   name: jenkins-ingress
   namespace: jenkins
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: jenkins.tpinf.xyz
     http:
@@ -23,7 +23,7 @@ metadata:
   name: argocd-ingress
   namespace: argocd
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: argocd.tpinf.xyz
     http:
@@ -42,7 +42,7 @@ metadata:
   name: defectdojo-ingress
   namespace: defectdojo
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: defectdojo.tpinf.xyz
     http:
@@ -61,7 +61,7 @@ metadata:
   name: kong-proxy-ingress
   namespace: kong
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: api.tpinf.xyz
     http:
@@ -80,7 +80,7 @@ metadata:
   name: litellm-ingress
   namespace: litellm
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: litellm.tpinf.xyz
     http:
@@ -99,7 +99,7 @@ metadata:
   name: uptime-kuma-ingress
   namespace: monitoring
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: uptime-kuma.tpinf.xyz
     http:
@@ -118,7 +118,7 @@ metadata:
   name: vulnerability-application-ingress
   namespace: monitoring
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: vulnerability-app.tpinf.xyz
     http:
@@ -137,7 +137,7 @@ metadata:
   name: rabbitmq-ingress
   namespace: rabbitmq
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: rabbitmq.tpinf.xyz
     http:
@@ -156,7 +156,7 @@ metadata:
   name: grafana-ingress
   namespace: monitoring
 spec:
-  ingressClassName: istio
+  
   rules:
   - host: grafana.tpinf.xyz
     http:
