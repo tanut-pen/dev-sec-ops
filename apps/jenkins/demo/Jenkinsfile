@@ -11,4 +11,4 @@ node {
     checkout scm
     pipelineLib = load 'apps/jenkins/lib/pipeline.groovy'
 }
-pipelineLib.run()
+pipelineLib()
