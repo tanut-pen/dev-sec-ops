@@ -1,6 +1,25 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
+  name: harbor-ingress
+  namespace: harbor
+spec:
+  
+  rules:
+  - host: harbor.tpinf.xyz
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: my-harbor-portal
+            port:
+              number: 80
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
   name: jenkins-ingress
   namespace: jenkins
 spec:
@@ -92,79 +111,79 @@ spec:
             name: litellm
             port:
               number: 4000
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: uptime-kuma-ingress
-  namespace: monitoring
-spec:
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: uptime-kuma-ingress
+#   namespace: monitoring
+# spec:
   
-  rules:
-  - host: uptime-kuma.tpinf.xyz
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: uptime-kuma
-            port:
-              number: 3001
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: vulnerability-application-ingress
-  namespace: monitoring
-spec:
+#   rules:
+#   - host: uptime-kuma.tpinf.xyz
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: uptime-kuma
+#             port:
+#               number: 3001
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: vulnerability-application-ingress
+#   namespace: monitoring
+# spec:
   
-  rules:
-  - host: vulnerability-app.tpinf.xyz
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: vulnerability-application
-            port:
-              number: 8080
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: rabbitmq-ingress
-  namespace: rabbitmq
-spec:
+#   rules:
+#   - host: vulnerability-app.tpinf.xyz
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: vulnerability-application
+#             port:
+#               number: 8080
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: rabbitmq-ingress
+#   namespace: rabbitmq
+# spec:
   
-  rules:
-  - host: rabbitmq.tpinf.xyz
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: rabbitmq
-            port:
-              number: 15672
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: grafana-ingress
-  namespace: monitoring
-spec:
+#   rules:
+#   - host: rabbitmq.tpinf.xyz
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: rabbitmq
+#             port:
+#               number: 15672
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: grafana-ingress
+#   namespace: monitoring
+# spec:
   
-  rules:
-  - host: grafana.tpinf.xyz
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: grafana
-            port:
-              number: 80
+#   rules:
+#   - host: grafana.tpinf.xyz
+#     http:
+#       paths:
+#       - path: /
+#         pathType: Prefix
+#         backend:
+#           service:
+#             name: grafana
+#             port:
+#               number: 80
