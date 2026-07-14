@@ -28,7 +28,7 @@ def call() {
 
             HARBOR_CREDENTIALS_ID = 'harbor-credentials'
             DEFECTDOJO_URL = 'https://defectdojo.tpinf.xyz'
-            DEFECTDOJO_ENGAGEMENT_ID = '2'
+            DEFECTDOJO_ENGAGEMENT_NAME = "Build #${env.BUILD_NUMBER}"
             DEFECTDOJO_PRODUCT_NAME = 'vulnerability-application'
             DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
         }
@@ -123,8 +123,10 @@ def call() {
                                 -H "Accept: application/json" \
                                 -F "scan_type=SonarQube Scan detailed" \
                                 -F "file=@sonar-report.html" \
-                                -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+                                -F "engagement_name=${DEFECTDOJO_ENGAGEMENT_NAME}" \
                                 -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+                                -F "product_type_name=Research and Development" \
+                                -F "auto_create_context=true" \
                                 -F "active=true" \
                                 -F "verified=false" \
                                 -F "close_old_findings=false" \
@@ -191,8 +193,10 @@ def call() {
                                 -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
                                 -H "Accept: application/json" \
                                 -F "scan_type=Trivy Scan" \
-                                -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+                                -F "engagement_name=${DEFECTDOJO_ENGAGEMENT_NAME}" \
                                 -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+                                -F "product_type_name=Research and Development" \
+                                -F "auto_create_context=true" \
                                 -F "active=true" \
                                 -F "verified=false" \
                                 -F "close_old_findings=false" \

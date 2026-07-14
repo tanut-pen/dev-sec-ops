@@ -62,9 +62,9 @@ pipeline {
       description: 'Upload the ZAP JSON report to DefectDojo after the scan'
     )
     string(
-      name: 'DEFECTDOJO_ENGAGEMENT_ID',
-      defaultValue: '1',
-      description: 'DefectDojo engagement ID to import findings into (only used when IMPORT_TO_DEFECTDOJO is true)'
+      name: 'DEFECTDOJO_ENGAGEMENT_NAME',
+      defaultValue: 'ZAP DAST Scan',
+      description: 'DefectDojo engagement name to use or automatically create (only used when IMPORT_TO_DEFECTDOJO is true)'
     )
   }
 
@@ -179,8 +179,10 @@ pipeline {
               -H "Authorization: Token ${DEFECTDOJO_API_TOKEN}" \
               -H "Accept: application/json" \
               -F "scan_type=ZAP Scan" \
-              -F "engagement=${DEFECTDOJO_ENGAGEMENT_ID}" \
+              -F "engagement_name=${DEFECTDOJO_ENGAGEMENT_NAME}" \
               -F "product_name=${DEFECTDOJO_PRODUCT_NAME}" \
+              -F "product_type_name=Research and Development" \
+              -F "auto_create_context=true" \
               -F "active=true" \
               -F "verified=false" \
               -F "close_old_findings=false" \
