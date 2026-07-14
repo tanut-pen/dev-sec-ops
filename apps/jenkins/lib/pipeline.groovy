@@ -15,7 +15,7 @@ def call() {
             REPO_BRANCH = 'main'
 
             APP_NAME = 'vulnerability-application'
-            IMAGE_TAG = "${env.BUILD_NUMBER}"
+            IMAGE_TAG = "${params.IMAGE_TAG?.trim() ? params.IMAGE_TAG : env.IMAGE_TAG_OVERRIDE ?: env.BUILD_NUMBER}"
             REGISTRY_URL = 'harbor.tpinf.xyz'
             REGISTRY_PROJECT = 'lab'
             IMAGE_NAME = "${REGISTRY_URL}/${REGISTRY_PROJECT}/${APP_NAME}:${IMAGE_TAG}"
@@ -163,9 +163,6 @@ def call() {
             }
 
             stage('Push Image to Harbor') {
-                when {
-                    expression { return params.PUSH_TO_HARBOR }
-                }
                 steps {
                     container('docker-cli') {
                         withCredentials([usernamePassword(credentialsId: "${env.HARBOR_CREDENTIALS_ID}", usernameVariable: 'HARBOR_USER', passwordVariable: 'HARBOR_PASS')]) {
@@ -180,9 +177,6 @@ def call() {
             }
 
             stage('Import Scan to DefectDojo') {
-                when {
-                    expression { return params.IMPORT_TO_DEFECTDOJO }
-                }
                 steps {
                     container('curl') {
                         sh '''

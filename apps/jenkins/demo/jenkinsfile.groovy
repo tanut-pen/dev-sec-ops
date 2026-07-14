@@ -6,8 +6,7 @@ pipelineJob('devsecops-demo-pipeline') {
   }
 
   parameters {
-    booleanParam('PUSH_TO_HARBOR', false, 'Push the built image to Harbor')
-    booleanParam('IMPORT_TO_DEFECTDOJO', false, 'Upload Trivy report to DefectDojo')
+    stringParam('IMAGE_TAG', '', 'Docker image tag (defaults to git commit SHA if left empty)')
   }
 
   definition {

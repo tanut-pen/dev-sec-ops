@@ -1,7 +1,6 @@
 properties([
     parameters([
-        booleanParam(name: 'PUSH_TO_HARBOR', defaultValue: false, description: 'Push the built image to Harbor'),
-        booleanParam(name: 'IMPORT_TO_DEFECTDOJO', defaultValue: false, description: 'Upload the Trivy report to DefectDojo')
+        string(name: 'IMAGE_TAG', defaultValue: '', description: 'Docker image tag (defaults to git commit SHA if left empty)')
     ])
 ])
 
@@ -9,6 +8,10 @@ properties([
 def pipelineLib
 node {
     checkout scm
+    // Default IMAGE_TAG to short commit SHA if not provided
+    if (!params.IMAGE_TAG?.trim()) {
+        env.IMAGE_TAG_OVERRIDE = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+    }
     pipelineLib = load 'apps/jenkins/lib/pipeline.groovy'
 }
 pipelineLib()
