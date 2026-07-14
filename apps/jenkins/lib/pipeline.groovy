@@ -28,7 +28,7 @@ def call() {
 
             HARBOR_CREDENTIALS_ID = 'harbor-credentials'
             DEFECTDOJO_URL = 'https://defectdojo.tpinf.xyz'
-            DEFECTDOJO_ENGAGEMENT_NAME = "Build #${env.BUILD_NUMBER}"
+            DEFECTDOJO_ENGAGEMENT_NAME = 'Test'
             DEFECTDOJO_PRODUCT_NAME = 'vulnerability-application'
             DEFECTDOJO_API_TOKEN = credentials('defectdojo-api-token')
         }
@@ -132,7 +132,6 @@ def call() {
                                 -F "close_old_findings=false" \
                                 -F "scan_date=$(date +%F)" \
                                 -F "minimum_severity=Info" \
-                                -F "file=@sonar-report.html" \
                                 -w "\\nHTTP_STATUS:%{http_code}")
 
                             echo "=== SONARQUBE IMPORT RESPONSE ==="

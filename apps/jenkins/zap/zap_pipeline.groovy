@@ -11,7 +11,7 @@ pipelineJob('zap-scan-pipeline') {
       'baseline = passive/fast | full = active attack | api = OpenAPI spec scan | all = run all three')
     stringParam('CONTEXT_FILE', '', '(Optional) Path or URL to a ZAP context (.context) file for authenticated scans. Leave empty to skip.')
     booleanParam('IMPORT_TO_DEFECTDOJO', false, 'Upload the ZAP JSON report to DefectDojo after the scan')
-    stringParam('DEFECTDOJO_ENGAGEMENT_NAME', 'ZAP DAST Scan', 'DefectDojo engagement name to use or automatically create (only used when IMPORT_TO_DEFECTDOJO is true)')
+    stringParam('DEFECTDOJO_ENGAGEMENT_NAME', 'Test', 'DefectDojo engagement name to use or automatically create (only used when IMPORT_TO_DEFECTDOJO is true)')
   }
 
   definition {

@@ -63,7 +63,7 @@ pipeline {
     )
     string(
       name: 'DEFECTDOJO_ENGAGEMENT_NAME',
-      defaultValue: 'ZAP DAST Scan',
+      defaultValue: 'Test',
       description: 'DefectDojo engagement name to use or automatically create (only used when IMPORT_TO_DEFECTDOJO is true)'
     )
   }
