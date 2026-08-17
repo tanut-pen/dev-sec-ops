@@ -1,17 +1,3 @@
-# ──────────────────────────────────────────────────────────────────────────────
-# App of Apps — Root Application
-#
-# This single Application watches the argocd/ directory in git.
-# When synced, it automatically applies app-list.yaml and creates all
-# child Applications. Any changes pushed to app-list.yaml in git will
-# be picked up and applied automatically.
-#
-# Apply once (bootstrap):
-#   kubectl apply -f argocd/app-of-apps.yaml
-#
-# Or via Argo CD UI:
-#   + NEW APP → Edit as YAML → paste this file → Create → Sync
-# ──────────────────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
