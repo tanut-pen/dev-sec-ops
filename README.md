@@ -2,7 +2,20 @@
 
 This repository provisions a small local DevSecOps environment on Kubernetes and includes a Jenkins pipeline that demonstrates a basic secure CI flow.
 
-The stack in this repo includes:
+## What is DevSecOps?
+
+**DevSecOps** means integrating security practices throughout the entire software development lifecycle (development, security, and operations). This lab demonstrates a complete pipeline where:
+
+- **Code is scanned** for vulnerabilities (SonarQube)
+- **Container images are checked** for security issues (Trivy)
+- **Vulnerabilities are tracked** and managed (DefectDojo)
+- **Changes are deployed safely** using GitOps (Argo CD)
+- **Health is monitored** (Grafana, Uptime Kuma)
+- **Secrets are managed securely** (Vault, Kubeseal)
+
+This lab gives you hands-on experience with real DevSecOps tools in a local, safe environment.
+
+## The stack in this repo includes:
 
 - `k3d` for a local Kubernetes cluster
 - `Helm` for installing platform components
@@ -78,28 +91,105 @@ The included Jenkins pipeline performs these steps:
 
 ## Prerequisites
 
-Install these tools on your machine before using this repository:
+You need to install these tools on your machine before using this repository. **Don't worry if you don't have them yet — installation links and instructions are below.**
 
-- `docker`
-- `kubectl`
-- `helm`
-- `k3d`
-- `kubeseal` CLI (for Sealed Secrets)
+### Required Tools
 
-This repo assumes you are working in a local environment where Docker is available and Kubernetes workloads can mount `/var/run/docker.sock`.
+| Tool | Purpose | Installation |
+|------|---------|---------------|
+| **Docker** | Container runtime; runs your applications in isolated environments | [Install Docker](https://docs.docker.com/get-docker/) |
+| **Kubernetes (kubectl)** | Command-line tool to interact with Kubernetes clusters | [Install kubectl](https://kubernetes.io/docs/tasks/tools/) |
+| **Helm** | Package manager for Kubernetes; installs and manages applications | [Install Helm](https://helm.sh/docs/intro/install/) |
+| **k3d** | Creates lightweight local Kubernetes clusters using Docker | [Install k3d](https://k3d.io/#installation) |
+| **Kubeseal CLI** | Encrypts secrets for Kubernetes | [Install kubeseal](https://github.com/bitnami-labs/sealed-secrets#installation) |
 
-## Setup Flow
+### System Requirements
+
+- **OS**: macOS, Linux, or Windows (with WSL2)
+- **RAM**: Minimum 8GB (16GB recommended for comfortable operation)
+- **Disk**: At least 30GB free space
+- **Container Runtime**: Docker or Rancher Desktop (both work with this project)
+
+#### Docker or Rancher Desktop?
+
+**Docker Desktop** — Traditional choice, industry standard. Requires Docker subscription for organizations.
+
+**Rancher Desktop** *(Recommended for this project)* — Free, open-source alternative with built-in Kubernetes support. Works seamlessly with k3d and includes all necessary components. [Install Rancher Desktop](https://rancherdesktop.io/)
+
+If using **Rancher Desktop**, you get:
+- ✅ Integrated Kubernetes (can skip k3d if you prefer)
+- ✅ Built-in containerd runtime
+- ✅ Free and open-source
+- ✅ No enterprise subscription required
+- ✅ Full compatibility with this project
+
+**Note:** This project requires container socket access (`/var/run/docker.sock` or Rancher Desktop equivalent). Both Docker Desktop and Rancher Desktop provide this by default.
+
+### Quick Verification
+
+After installing, verify everything is working:
+
+```bash
+docker --version
+kubectl version --client
+helm version
+k3d version
+kubeseal --version
+```
+
+If all commands show version numbers, you're ready to proceed!
+
+## Quick Start (5–10 minutes)
+
+**Want to see it working quickly? Try this minimal setup:**
+
+```bash
+# 1. Clone this repository
+git clone <your-repo-url>
+cd dev-sec-ops
+
+# 2. Create a local Kubernetes cluster (takes ~2 minutes)
+./k3d/start.sh
+
+# 3. Verify the cluster is running
+kubectl get nodes
+
+# 4. Install just Jenkins and SonarQube (the essentials)
+cd apps/jenkins && ./install.sh && cd ../..
+cd apps/sonarqube && ./install.sh && cd ../..
+
+# 5. Get Jenkins admin password
+kubectl get secret -n jenkins $(kubectl get secret -n jenkins -o name | grep jenkins) -o jsonpath='{.data.jenkins-admin-password}' | base64 --decode
+
+# 6. Access Jenkins at http://localhost:30003
+```
+
+That's it! You now have a working Jenkins + SonarQube pipeline running locally. To add more tools, follow the **Full Setup** section below.
+
+---
+
+## Full Setup Flow
 
 ### 1. Create the local cluster
 
 ```bash
-./k3d/start.sh
+cd apps/k3d  # or wherever k3d/start.sh is located
+./start.sh
 ```
 
 Creates a cluster named `my-cluster` with:
 
 - 1 server node, 1 agent node
 - K3s image `rancher/k3s:v1.22.7-k3s1-amd64`
+
+**Verify:**
+
+```bash
+kubectl get nodes
+kubectl get pods --all-namespaces
+```
+
+You should see 2 nodes in "Ready" status.
 
 ### 2. Install Jenkins
 
@@ -113,42 +203,7 @@ cd apps/jenkins
 - Admin credentials: set by you for your local lab deployment
 - Persistent volume size: `8Gi`
 
-### 3. Install SonarQube
-
-```bash
-cd apps/sonarqube
-./install.sh
-```
-
-- Namespace: `sonarqube`
-- Community edition
-- Monitoring passcode: set via your local values/configuration
-- Ingress host: `sonarqube.local`
-
-### 4. Install Harbor
-
-```bash
-cd apps/harbor
-./install.sh
-```
-
-- Namespace: `harbor`
-- HTTP only, TLS disabled
-- External URL: `http://localhost:30002`
-- Ingress host: `harbor.local`
-
-### 5. Install DefectDojo
-
-```bash
-cd apps/defectdojo
-./install.sh
-```
-
-- Namespace: `defectdojo`
-- Django service exposed via ingress at `defectdojo.local`
-- PostgreSQL and Valkey persistence enabled
-
-### 6. Install Argo CD
+### 7. Install Argo CD (GitOps Deployment)
 
 ```bash
 cd argocd
@@ -161,7 +216,7 @@ cd argocd
 - Server runs in insecure mode for local ingress compatibility
 - Also installs Argo Rollouts in namespace `argo-rollouts`
 
-### 7. Install Istio
+### 8. Install Istio (Service Mesh)
 
 ```bash
 cd apps/istio
@@ -175,7 +230,16 @@ cd apps/istio
 - HTTP NodePort: `30080`
 - HTTPS NodePort: `30443`
 
-### 8. Install Grafana Stack
+**Verify:**
+
+```bash
+kubectl get pods -n istio-system
+kubectl get pods -n istio-ingress
+```
+
+---
+
+### 9. Install Grafana Stack (Monitoring)
 
 ```bash
 cd apps/grafana
@@ -189,7 +253,7 @@ cd apps/grafana
 - Prometheus retention: `7d`
 - Ingress host: `grafana.local`
 
-### 9. Install Grafana Alloy
+### 10. Install Grafana Alloy (Telemetry Collection)
 
 ```bash
 cd apps/grafana-alloy
@@ -201,7 +265,15 @@ cd apps/grafana-alloy
 - Controller: `DaemonSet`
 - Sends Alloy self metrics to the local Prometheus remote write endpoint
 
-### 10. Install Vault
+**Verify:**
+
+```bash
+kubectl get daemonsets -n grafana-alloy
+```
+
+---
+
+### 11. Install Vault (Secrets Management)
 
 ```bash
 cd apps/vault
@@ -213,7 +285,7 @@ cd apps/vault
 - Values file: `vault/vault-values.yaml`
 - Run `vault operator init` after install to get the root token and unseal keys
 
-### 11. Install Uptime Kuma
+### 12. Install Uptime Kuma (Monitoring)
 
 ```bash
 cd apps/uptime-kuma
@@ -226,7 +298,15 @@ cd apps/uptime-kuma
 - 4Gi persistent volume
 - Set credentials on first login
 
-### 12. Install Portainer
+**Access:**
+
+```bash
+# Open http://localhost:30006 and set your admin credentials
+```
+
+---
+
+### 13. Install Portainer (Kubernetes UI)
 
 ```bash
 cd apps/portainer
@@ -250,7 +330,7 @@ cd apps/kubeseal
 - Chart: `sealed-secrets/sealed-secrets` from `bitnami-labs.github.io`
 - Installs the controller; use the `kubeseal` CLI to encrypt secrets
 
-### 14. Install Kong Gateway
+### 14. Install Kong Gateway (API Gateway)
 
 ```bash
 cd apps/kong
@@ -264,6 +344,14 @@ cd apps/kong
 - HTTP Proxy NodePort: `30008` → `http://localhost:30008`
 - HTTPS Proxy NodePort: `30009` → `https://localhost:30009`
 - Kubernetes Ingress Controller enabled (uses `ingressClassName: kong`)
+
+**Verify:**
+
+```bash
+kubectl get pods -n kong
+```
+
+---
 
 ### 15. Install GitLab *(optional)*
 
@@ -293,9 +381,53 @@ Apply with:
 kubectl apply -f static/ingress.yaml
 ```
 
-## Credentials Reference
+## Credentials and Secrets Management
 
-Do not commit or publish real credentials. Use local environment variables, Kubernetes Secrets, or Vault for service authentication values.
+### Security Best Practices
+
+**Never commit real credentials to Git.** Instead:
+
+1. **Environment Variables** (for local development)
+   ```bash
+   export HARBOR_PASSWORD="your-password"
+   ```
+
+2. **Kubernetes Secrets** (for cluster workloads)
+   ```bash
+   kubectl create secret generic harbor-credentials \
+     --from-literal=username=admin \
+     --from-literal=password=yourpassword \
+     -n jenkins
+   ```
+
+3. **Sealed Secrets** (encrypted in Git, safe to commit)
+   ```bash
+   echo -n 'your-secret' | kubectl create secret generic my-secret --dry-run=client --from-file=/dev/stdin -o yaml | kubeseal > sealed-secret.yaml
+   ```
+
+4. **Vault** (enterprise-grade secrets management)
+   ```bash
+   vault kv put secret/myapp password="yourpassword"
+   ```
+
+### Initial Setup: Jenkins Credentials
+
+After Jenkins is installed, add these credentials in the Jenkins UI (Manage Jenkins → Credentials):
+
+| Credential ID | Type | Value | Usage |
+|---|---|---|---|
+| `harbor-credentials` | Username/Password | Harbor admin user | Push images to Harbor |
+| `defectdojo-api-token` | Secret text | DefectDojo API token | Import vulnerability reports |
+| `sonar` | Secret text | SonarQube token | Run code analysis |
+
+**How to get DefectDojo API Token:**
+
+```bash
+# Port-forward to DefectDojo
+kubectl port-forward -n defectdojo svc/defectdojo-django 8000:8000 &
+# Visit http://localhost:8000 and login
+# Go to User Profile → API Key → Generate new key
+```
 
 ## Jenkins Pipeline Overview
 
@@ -335,6 +467,180 @@ https://github.com/docker/getting-started-todo-app.git
 | `defectdojo-api-token` | Secret text | Import Trivy reports |
 | `sonar` | Secret text | SonarQube analysis |
 
+## Troubleshooting
+
+### Common Issues and Solutions
+
+#### "kubectl: command not found"
+
+**Solution:** kubectl is not installed or not in PATH. See [Prerequisites](#prerequisites) for installation instructions.
+
+#### Cluster won't start with k3d
+
+```bash
+# Check if Docker is running
+docker ps
+
+# If error, start Docker and try again
+./k3d/start.sh
+
+# Check cluster status
+k3d cluster list
+```
+
+#### Pod stuck in "Pending" state
+
+```bash
+# Check pod status and events
+kubectl describe pod POD_NAME -n NAMESPACE
+
+# Common causes:
+# - Insufficient resources (CPU/memory)
+# - PersistentVolume not available
+# - Image pull errors
+```
+
+#### Helm install fails
+
+```bash
+# Update Helm repositories
+helm repo update
+
+# Check for conflicting releases
+helm list -n NAMESPACE
+
+# If stuck, uninstall and retry
+helm uninstall RELEASE_NAME -n NAMESPACE
+```
+
+#### Port already in use (e.g., port 30003)
+
+```bash
+# Check what's using the port
+lsof -i :30003
+
+# Either:
+# 1. Kill the process: kill -9 PID
+# 2. Or use a different port by editing install.sh
+```
+
+#### Jenkins won't start after install
+
+```bash
+# Check logs
+kubectl logs -n jenkins -l app=jenkins --tail=50
+
+# Verify PVC is bound
+kubectl get pvc -n jenkins
+
+# Restart pod if stuck
+kubectl rollout restart deployment jenkins -n jenkins
+```
+
+#### How to debug any pod
+
+```bash
+# Get logs
+kubectl logs -n NAMESPACE POD_NAME
+
+# Get detailed info
+kubectl describe pod POD_NAME -n NAMESPACE
+
+# Get shell access
+kubectl exec -it POD_NAME -n NAMESPACE -- /bin/bash
+
+# Check events
+kubectl get events -n NAMESPACE
+```
+
+#### Need to restart everything?
+
+```bash
+# Delete and recreate cluster
+k3d cluster delete my-cluster
+./k3d/start.sh
+```
+
+---
+
+## Cleanup and Uninstall
+
+### Remove Individual Components
+
+```bash
+# Uninstall a specific service
+helm uninstall RELEASE_NAME -n NAMESPACE
+
+# Example: Remove Jenkins
+helm uninstall jenkins -n jenkins
+kubectl delete namespace jenkins
+```
+
+### Remove All Installed Services
+
+```bash
+# From repository root
+helm uninstall jenkins -n jenkins 2>/dev/null
+helm uninstall sonarqube -n sonarqube 2>/dev/null
+helm uninstall my-harbor -n harbor 2>/dev/null
+helm uninstall defectdojo -n defectdojo 2>/dev/null
+helm uninstall argocd -n argocd 2>/dev/null
+helm uninstall istio -n istio-system 2>/dev/null
+helm uninstall kube-prometheus-stack -n grafana 2>/dev/null
+helm uninstall grafana-alloy -n grafana-alloy 2>/dev/null
+helm uninstall vault -n vault 2>/dev/null
+helm uninstall uptime-kuma -n monitoring 2>/dev/null
+helm uninstall portainer -n portainer 2>/dev/null
+helm uninstall sealed-secrets -n kube-system 2>/dev/null
+helm uninstall kong -n kong 2>/dev/null
+
+# Clean up namespaces
+kubectl delete namespace jenkins sonarqube harbor defectdojo argocd istio-system grafana grafana-alloy vault monitoring portainer kong
+```
+
+### Completely Delete the Cluster
+
+```bash
+# WARNING: This deletes everything, including persistent data!
+k3d cluster delete my-cluster
+```
+
+### Verification After Cleanup
+
+```bash
+# Verify cluster is clean
+kubectl get namespaces
+kubectl get all --all-namespaces
+```
+
+---
+
+## Compatibility Notes
+
+### Rancher Desktop Support
+
+✅ **This project is fully compatible with Rancher Desktop.**
+
+Rancher Desktop users can:
+1. Skip Docker Desktop installation entirely
+2. Use Rancher Desktop's built-in container runtime
+3. Still use k3d to create Kubernetes clusters (recommended for consistency)
+4. Or use Rancher Desktop's built-in Kubernetes directly
+
+**Setup with Rancher Desktop:**
+
+```bash
+# Option 1: Use k3d with Rancher Desktop (recommended)
+# Rancher Desktop provides the container runtime for k3d
+./k3d/start.sh
+
+# Option 2: Use Rancher Desktop's built-in Kubernetes directly
+# Enable Kubernetes in Rancher Desktop settings, then:
+kubectl config use-context rancher-desktop
+```
+
+---
+
 ## Notes and Limitations
 
 - This repository is intentionally scoped as a local lab and portfolio demo, not a production-hardened platform.
@@ -373,10 +679,17 @@ kubectl apply -f static/ingress.yaml
 
 This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, DefectDojo, Argo CD, Grafana, Vault, Uptime Kuma, Portainer, Kubeseal, and Kong Gateway into a single environment suitable for demos, learning, and experimentation.
 
-##Get token after apply secret
+## Get Token After Applying Secret
 
+For remote access to your Kubernetes cluster (e.g., from Portainer or external tools):
+
+```bash
 kubectl create serviceaccount remote-admin -n kube-system
 
 kubectl create clusterrolebinding remote-admin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:remote-admin
 
 kubectl get secret remote-admin-token -n kube-system -o jsonpath='{.data.token}' | base64 --decode
+echo ""  # Add newline for readability
+```
+
+This creates a service account with cluster-admin permissions and outputs the access token. **Save this token securely** — it grants full cluster access.
