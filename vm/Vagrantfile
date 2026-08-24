@@ -1,0 +1,134 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# ==============================================================================
+# Linux Multi-Node Vagrantfile (Master & Worker Nodes)
+# Optimized for VMware Fusion / Desktop on macOS (ARM64 / x86_64)
+# Prepared for manual RKE2 installation
+# ==============================================================================
+
+# bento/ubuntu-22.04 has native vmware_desktop support for Apple Silicon (ARM64) & Intel
+IMAGE_NAME       = "bento/ubuntu-22.04"
+MASTER_COUNT     = 1
+WORKER_COUNT     = 2
+
+# Hardware specs
+MASTER_CPU       = 2
+MASTER_MEMORY    = 4096 # MB
+WORKER_CPU       = 2
+WORKER_MEMORY    = 2048 # MB
+
+# Network settings (Host-only private network)
+NETWORK_SUBNET   = "192.168.56."
+MASTER_IP_START  = 10   # 192.168.56.10
+WORKER_IP_START  = 20   # 192.168.56.20, 192.168.56.21, ...
+
+Vagrant.configure("2") do |config|
+  config.vm.box = IMAGE_NAME
+
+  # ----------------------------------------------------------------------------
+  # Global Provider Configurations
+  # ----------------------------------------------------------------------------
+  # VMware Fusion / Desktop (Default for macOS)
+  config.vm.provider "vmware_desktop" do |v|
+    v.gui = false
+  end
+
+  # VirtualBox (Fallback)
+  config.vm.provider "virtualbox" do |v|
+    v.gui = false
+    v.linked_clone = true if Vagrant::VERSION =~ /^2\./
+  end
+
+  # Libvirt / KVM (Fallback)
+  config.vm.provider "libvirt" do |v|
+    v.driver = "kvm"
+  end
+
+  # ----------------------------------------------------------------------------
+  # Base Provisioning: /etc/hosts, swapoff, base tools
+  # ----------------------------------------------------------------------------
+  config.vm.provision "shell", inline: <<-SHELL
+    set -e
+    echo ">>> Preparing base Linux node..."
+
+    # Disable swap (Kubernetes requirement)
+    swapoff -a
+    sed -i '/swap/d' /etc/fstab
+
+    # Update hosts file for easy inter-node name resolution
+    cat <<EOF >> /etc/hosts
+#{NETWORK_SUBNET}#{MASTER_IP_START} rke2-master
+#{(1..WORKER_COUNT).map { |i| "#{NETWORK_SUBNET}#{WORKER_IP_START + i - 1} rke2-worker-#{i}" }.join("\n")}
+EOF
+
+    # Install basic utilities
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update -qq
+    apt-get install -y -qq curl wget vim net-tools jq tar
+  SHELL
+
+  # ----------------------------------------------------------------------------
+  # Master Node(s)
+  # ----------------------------------------------------------------------------
+  (1..MASTER_COUNT).each do |i|
+    node_name = MASTER_COUNT == 1 ? "rke2-master" : "rke2-master-#{i}"
+    node_ip   = "#{NETWORK_SUBNET}#{MASTER_IP_START + i - 1}"
+
+    config.vm.define node_name do |master|
+      master.vm.hostname = node_name
+      master.vm.network "private_network", ip: node_ip
+
+      # VMware Fusion / Desktop settings
+      master.vm.provider "vmware_desktop" do |v|
+        v.vmx["numvcpus"] = MASTER_CPU.to_s
+        v.vmx["memsize"]  = MASTER_MEMORY.to_s
+      end
+
+      # VirtualBox settings
+      master.vm.provider "virtualbox" do |v|
+        v.name   = node_name
+        v.cpus   = MASTER_CPU
+        v.memory = MASTER_MEMORY
+      end
+
+      # Libvirt settings
+      master.vm.provider "libvirt" do |v|
+        v.cpus   = MASTER_CPU
+        v.memory = MASTER_MEMORY
+      end
+    end
+  end
+
+  # ----------------------------------------------------------------------------
+  # Worker Node(s)
+  # ----------------------------------------------------------------------------
+  (1..WORKER_COUNT).each do |i|
+    node_name = "rke2-worker-#{i}"
+    node_ip   = "#{NETWORK_SUBNET}#{WORKER_IP_START + i - 1}"
+
+    config.vm.define node_name do |worker|
+      worker.vm.hostname = node_name
+      worker.vm.network "private_network", ip: node_ip
+
+      # VMware Fusion / Desktop settings
+      worker.vm.provider "vmware_desktop" do |v|
+        v.vmx["numvcpus"] = WORKER_CPU.to_s
+        v.vmx["memsize"]  = WORKER_MEMORY.to_s
+      end
+
+      # VirtualBox settings
+      worker.vm.provider "virtualbox" do |v|
+        v.name   = node_name
+        v.cpus   = WORKER_CPU
+        v.memory = WORKER_MEMORY
+      end
+
+      # Libvirt settings
+      worker.vm.provider "libvirt" do |v|
+        v.cpus   = WORKER_CPU
+        v.memory = WORKER_MEMORY
+      end
+    end
+  end
+end

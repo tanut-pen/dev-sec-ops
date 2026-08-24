@@ -25,3 +25,5 @@ secret*.yaml
 skills-lock.json
 .antigravitycli
 node_modules
+
+.vagrant
