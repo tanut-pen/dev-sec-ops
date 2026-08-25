@@ -10,7 +10,8 @@ A beginner-friendly guide to setting up a multi-node Linux environment with Vagr
 3. [Step 1: Install RKE2 Server (Master Node)](#-step-1-install-rke2-server-master-node)
 4. [Step 2: Install RKE2 Agent (Worker Nodes)](#-step-2-install-rke2-agent-worker-nodes)
 5. [Step 3: Verify the Cluster](#-step-3-verify-the-cluster)
-6. [🛠 Helpful Commands & Troubleshooting](#-helpful-commands--troubleshooting)
+6. [Rancher Manager](rancher-manager.md)
+7. [🛠 Helpful Commands & Troubleshooting](#-helpful-commands--troubleshooting)
 
 ---
 
