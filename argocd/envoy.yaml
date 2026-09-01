@@ -13,8 +13,11 @@ spec:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
     path: apps/envoy/deployment
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
+    namespace: default
   syncPolicy:
     automated:
       selfHeal: true
