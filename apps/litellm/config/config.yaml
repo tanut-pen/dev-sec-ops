@@ -7,13 +7,13 @@
 general_settings:
   store_model_in_db: true
 
-mcp_servers:
-  kube_mcp:
-    transport: "sse"
-    url: "http://kubernetes-mcp-server.kubernetes-mcp-server.svc.cluster.local:8080/sse"
-  jenkins_mcp:
-    transport: "sse"
-    url: "http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse"
-  atlassian_mcp:
-    transport: "sse"
-    url: "http://mcp-atlassian.mcp-atlassian.svc.cluster.local:9887/sse"
+# mcp_servers:
+#   kube_mcp:
+#     transport: "sse"
+#     url: "http://kubernetes-mcp-server.kubernetes-mcp-server.svc.cluster.local:8080/sse"
+#   jenkins_mcp:
+#     transport: "sse"
+#     url: "http://mcp-jenkins.jenkins.svc.cluster.local:9887/sse"
+#   atlassian_mcp:
+#     transport: "sse"
+#     url: "http://mcp-atlassian.mcp-atlassian.svc.cluster.local:9887/sse"

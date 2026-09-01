@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-dashboard
+  namespace: monitor
+  labels:
+    app.kubernetes.io/name: jenkins-dashboard
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: jenkins-dashboard
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: jenkins-dashboard
+    spec:
+      containers:
+      - name: jenkins-dashboard
+        image: localhost:5000/jenkins-dashboard:latest
+        imagePullPolicy: Always
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 3001
