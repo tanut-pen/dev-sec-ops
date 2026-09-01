@@ -1,0 +1,10 @@
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: Backend
+metadata:
+  name: envoy-ai-gateway-basic-openai
+  namespace: default
+spec:
+  endpoints:
+    - fqdn:
+        hostname: host.docker.internal
+        port: 1234
