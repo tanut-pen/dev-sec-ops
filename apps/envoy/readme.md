@@ -59,27 +59,31 @@ apps/envoy/
 ├── install.sh
 ├── test_request.sh
 ├── readme.md
-├── basic/
-│   ├── GatewayClass.yaml
-│   ├── Gateway.yaml
-│   ├── ClientTrafficPolicy.yaml
-│   ├── AIGatewayRoute.yaml
-│   ├── AIServiceBackend.yaml
-│   ├── Backend.yaml
-│   ├── Deployment.yaml
-│   ├── Service.yaml
-│   └── EnvoyProxy.yaml
-└── openai/
-    ├── AIGatewayRoute.yaml
-    ├── AIServiceBackend.yaml
-    └── Backend.yaml
+└── deployment/
+    ├── common/
+    │   ├── GatewayClass.yaml
+    │   ├── Gateway.yaml
+    │   ├── ClientTrafficPolicy.yaml
+    │   └── EnvoyProxy.yaml
+    └── config/
+        ├── basic/
+        │   ├── AIGatewayRoute.yaml
+        │   ├── AIServiceBackend.yaml
+        │   ├── Backend.yaml
+        │   ├── Deployment.yaml
+        │   └── Service.yaml
+        └── openai/
+            ├── AIGatewayRoute.yaml
+            ├── AIServiceBackend.yaml
+            └── Backend.yaml
 ```
 
 | Path | Purpose |
 |------|---------|
 | [`install.sh`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/install.sh) | Deploys Envoy Gateway, AI Gateway CRDs, and AI Gateway Controller |
-| [`basic/`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/basic) | GatewayClass, Gateway, ClientTrafficPolicy (50MiB buffer), EnvoyProxy, and mock upstream |
-| [`openai/`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/openai) | AIGatewayRoute, AIServiceBackend, and Backend for LM Studio (`qwen/qwen3.8-27b`) |
+| [`deployment/common/`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/deployment/common) | Shared gateway infrastructure: GatewayClass, Gateway, ClientTrafficPolicy (50MiB buffer), and EnvoyProxy |
+| [`deployment/config/basic/`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/deployment/config/basic) | Route & mock upstream backend (`some-cool-self-hosted-model`) |
+| [`deployment/config/openai/`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/deployment/config/openai) | Route & backend pointing to local LM Studio / OpenAI (`qwen/qwen3.8-27b`) |
 | [`test_request.sh`](file:///Users/Tanut.P/SCM/github/dev-sec-ops/apps/envoy/test_request.sh) | Test script to send sample chat completions to the gateway |
 
 ---
@@ -98,18 +102,22 @@ chmod +x install.sh
 
 ### 2. Apply Base Gateway Infrastructure
 
-Deploy the Gateway, GatewayClass, ClientTrafficPolicy, EnvoyProxy, and mock backend:
+Deploy the shared Gateway, GatewayClass, ClientTrafficPolicy, and EnvoyProxy:
 
 ```bash
-kubectl apply -f apps/envoy/basic/
+kubectl apply -f apps/envoy/deployment/common/
 ```
 
-### 3. Deploy LM Studio / OpenAI Routing
+### 3. Deploy Route Configurations
 
-Deploy the AI route and backend configuration pointing to your local LM Studio instance:
+Deploy the basic mock route or LM Studio / OpenAI route:
 
 ```bash
-kubectl apply -f apps/envoy/openai/
+# Basic mock backend
+kubectl apply -f apps/envoy/deployment/config/basic/
+
+# LM Studio / OpenAI route
+kubectl apply -f apps/envoy/deployment/config/openai/
 ```
 
 ---
