@@ -1,22 +1,23 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: nginx-sit
+  name: envoy
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: devsecops-lab
-    app.kubernetes.io/name: nginx
-    environment: sit
+    app.kubernetes.io/name: envoy
 spec:
   revisionHistoryLimit: 3
   project: default
   source:
     repoURL: https://github.com/tanut-pen/dev-sec-ops.git
     targetRevision: HEAD
-    path: apps/nginx/overlays/sit
+    path: apps/envoy/deployment
+    directory:
+      recurse: true
   destination:
     server: https://kubernetes.default.svc
-    namespace: nginx-sit
+    namespace: default
   syncPolicy:
     automated:
       selfHeal: true
@@ -24,98 +25,6 @@ spec:
     syncOptions:
       - CreateNamespace=true
 ---
-# ── Nginx UAT ─────────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: nginx-uat
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-    app.kubernetes.io/name: nginx
-    environment: uat
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-    targetRevision: HEAD
-    path: apps/nginx/overlays/uat
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: nginx-uat
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── Jenkins ───────────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: jenkins
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://charts.jenkins.io
-      chart: jenkins
-      targetRevision: "*"
-      helm:
-        valueFiles:
-          - $values/apps/jenkins/jenkins-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: jenkins
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── SonarQube ─────────────────────────────────────────────────────────────────
-# Note: original install.sh uses --set flags (no values file).
-# Using values-sonar.yaml with community edition settings.
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: sonarqube
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://SonarSource.github.io/helm-chart-sonarqube
-#       chart: sonarqube
-#       targetRevision: "*"
-#       helm:
-#         valueFiles:
-#           - $values/apps/sonarqube/sonarqube-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: sonarqube
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
-
-# # ── Harbor ────────────────────────────────────────────────────────────────────
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
@@ -140,221 +49,6 @@ spec:
   destination:
     server: https://kubernetes.default.svc
     namespace: harbor
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── DefectDojo ────────────────────────────────────────────────────────────────
-# Note: createSecret/createValkeySecret/createPostgresqlSecret are one-time
-# bootstrap flags — intentionally excluded here to avoid re-creation on sync.
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: defectdojo
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://raw.githubusercontent.com/DefectDojo/django-DefectDojo/helm-charts
-      chart: defectdojo
-      targetRevision: "*"
-      helm:
-        valueFiles:
-          - $values/apps/defectdojo/defectdojo-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: defectdojo
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── Argo CD ───────────────────────────────────────────────────────────────────
-# Managing Argo CD itself with Argo CD (app-of-apps pattern).
-# selfHeal: false — avoid Argo CD restarting itself unexpectedly.
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: argocd
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://argoproj.github.io/argo-helm
-      chart: argo-cd
-      targetRevision: "*"
-      helm:
-        releaseName: argocd
-        valueFiles:
-          - $values/argocd/values-argocd.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      selfHeal: false   # intentionally false — avoid self-restart loop
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── Argo Rollouts ─────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: argo-rollouts
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://argoproj.github.io/argo-helm
-      chart: argo-rollouts
-      targetRevision: "*"
-      helm:
-        releaseName: argo-rollouts
-        valueFiles:
-          - $values/argocd/values-rollouts.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argo-rollouts
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── Vault ─────────────────────────────────────────────────────────────────────
-# apiVersion: argoproj.io/v1alpha1
-# kind: Application
-# metadata:
-#   name: vault
-#   namespace: argocd
-#   labels:
-#     app.kubernetes.io/part-of: devsecops-lab
-# spec:
-#   revisionHistoryLimit: 3
-#   project: default
-#   sources:
-#     - repoURL: https://helm.releases.hashicorp.com
-#       chart: vault
-#       targetRevision: "*"
-#       helm:
-#         releaseName: vault
-#         valueFiles:
-#           - $values/apps/vault/vault-values.yaml
-#     - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-#       targetRevision: HEAD
-#       ref: values
-#   destination:
-#     server: https://kubernetes.default.svc
-#     namespace: vault
-#   syncPolicy:
-#     automated:
-#       selfHeal: true
-#       prune: true
-#     syncOptions:
-#       - CreateNamespace=true
----
-# ── Kong Gateway ──────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: kong
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  sources:
-    - repoURL: https://charts.konghq.com
-      chart: kong
-      targetRevision: "*"
-      helm:
-        releaseName: kong
-        valueFiles:
-          - $values/apps/kong/kong-values.yaml
-    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-      targetRevision: HEAD
-      ref: values
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: kong
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── Static Manifests ─────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: static-manifest
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-    targetRevision: HEAD
-    path: static
-    directory:
-      recurse: true
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: 'default'
-  syncPolicy:
-    automated:
-      selfHeal: true
-      prune: true
-    syncOptions:
-      - CreateNamespace=true
----
-# ── LiteLLM ───────────────────────────────────────────────────────────────────
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  name: litellm
-  namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-spec:
-  revisionHistoryLimit: 3
-  project: default
-  source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-    targetRevision: HEAD
-    path: apps/litellm
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: litellm
   syncPolicy:
     automated:
       selfHeal: true

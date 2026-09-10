@@ -15,7 +15,7 @@ spec:
     targetRevision: HEAD
     path: argocd
     directory:
-      include: "envoy.yaml"
+      include: "app-list.yaml"
   destination:
     server: https://kubernetes.default.svc
     namespace: argocd
