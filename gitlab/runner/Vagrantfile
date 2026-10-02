@@ -1,0 +1,477 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require "ipaddr"
+require "json"
+
+BOX_NAME          = "bento/ubuntu-24.04"
+BOX_VERSION       = "202510.26.0"
+PREFERRED_IP      = "192.168.56.21"
+DEFAULT_NETMASK   = "255.255.255.0"
+VMWARE_NETWORKING = "/Library/Preferences/VMware Fusion/networking"
+
+# Docker job containers cannot reliably consume macOS split-DNS through
+# VMware's DNS proxy. Point them at the DNS servers reachable through the host
+# VPN. Override the comma-separated list when using this runner elsewhere:
+# RUNNER_DNS_SERVERS=1.1.1.1,8.8.8.8 vagrant up
+RUNNER_DNS_SERVERS = ENV.fetch("RUNNER_DNS_SERVERS", "10.1.200.200,10.2.200.200")
+  .split(",")
+  .map(&:strip)
+  .reject(&:empty?)
+
+raise "RUNNER_DNS_SERVERS must contain at least one DNS server" if RUNNER_DNS_SERVERS.empty?
+
+RUNNER_DNS_SERVERS.each do |server|
+  IPAddr.new(server)
+rescue IPAddr::InvalidAddressError
+  raise "Invalid address in RUNNER_DNS_SERVERS: #{server.inspect}"
+end
+
+RUNNER_DNS_JSON = JSON.generate(RUNNER_DNS_SERVERS)
+
+DOCKER_INSECURE_REGISTRIES = ENV.fetch("DOCKER_INSECURE_REGISTRIES", "kcshbr83.kcs")
+  .split(",")
+  .map(&:strip)
+  .reject(&:empty?)
+DOCKER_INSECURE_REGISTRIES_JSON = JSON.generate(DOCKER_INSECURE_REGISTRIES)
+
+GITLAB_URL          = ENV.fetch("GITLAB_URL", "https://gitlab.devopsnonprd.vayuktbcs")
+GITLAB_RUNNER_NAME  = ENV.fetch("GITLAB_RUNNER_NAME", "gitlab-runner")
+GITLAB_RUNNER_TOKEN = ENV.fetch("GITLAB_RUNNER_TOKEN", "")
+
+unless GITLAB_URL.match?(%r{\Ahttps?://[^/]+/?\z})
+  raise "GITLAB_URL must be an HTTP(S) server URL without a path"
+end
+
+# Select an existing VMware Fusion host-only network. If 192.168.56.0/24 is
+# configured (vmnet2 in this lab), keep the preferred address. Otherwise use
+# host number 21 on vmnet1, matching the GitLab VM's host-number-20 fallback.
+def fusion_host_only_network(preferred_ip)
+  networks = Hash.new { |hash, key| hash[key] = {} }
+
+  if File.readable?(VMWARE_NETWORKING)
+    File.foreach(VMWARE_NETWORKING) do |line|
+      next unless line =~ /^answer VNET_(\d+)_(HOSTONLY_SUBNET|HOSTONLY_NETMASK|VIRTUAL_ADAPTER|NAT)\s+(\S+)/
+
+      number, property, value = Regexp.last_match.captures
+      networks[number][property] = value
+    end
+  end
+
+  host_only = networks.select do |_number, properties|
+    properties["HOSTONLY_SUBNET"] &&
+      properties["HOSTONLY_NETMASK"] &&
+      properties["VIRTUAL_ADAPTER"] == "yes" &&
+      properties["NAT"] != "yes"
+  end
+
+  requested_ip = ENV.fetch("RUNNER_PRIVATE_IP", preferred_ip)
+  IPAddr.new(requested_ip, Socket::AF_INET)
+
+  selected = host_only.find do |_number, properties|
+    subnet = IPAddr.new("#{properties.fetch("HOSTONLY_SUBNET")}/#{properties.fetch("HOSTONLY_NETMASK")}")
+    subnet.include?(requested_ip)
+  end
+
+  if selected
+    number, properties = selected
+    return [requested_ip, properties.fetch("HOSTONLY_NETMASK"), "vmnet#{number}"]
+  end
+
+  if ENV.key?("RUNNER_PRIVATE_IP")
+    raise "RUNNER_PRIVATE_IP=#{requested_ip} is not in an existing VMware Fusion host-only subnet"
+  end
+
+  selected = host_only.find { |number, _properties| number == "1" } ||
+             host_only.sort_by { |number, _properties| number.to_i }.first
+
+  unless selected
+    warn "WARNING: Could not read an existing Fusion host-only vmnet; trying #{preferred_ip}/24."
+    warn "Inspect #{VMWARE_NETWORKING} and set RUNNER_PRIVATE_IP if Vagrant cannot attach the network."
+    return [preferred_ip, DEFAULT_NETMASK, "auto-detected vmnet"]
+  end
+
+  number, properties = selected
+  subnet = IPAddr.new("#{properties.fetch("HOSTONLY_SUBNET")}/#{properties.fetch("HOSTONLY_NETMASK")}")
+  candidate = IPAddr.new(subnet.to_i + 21, Socket::AF_INET).to_s
+
+  warn "NOTICE: #{preferred_ip} is not on a configured Fusion host-only subnet."
+  warn "NOTICE: Using #{candidate} on vmnet#{number} instead."
+  [candidate, properties.fetch("HOSTONLY_NETMASK"), "vmnet#{number}"]
+rescue IPAddr::InvalidAddressError => e
+  raise "Invalid GitLab Runner private network configuration: #{e.message}"
+end
+
+# Refuse Rosetta or an Intel host so Vagrant can never select an amd64 artifact.
+host_arch = `/usr/bin/uname -m`.strip
+raise "This VM requires an Apple Silicon arm64 host; detected #{host_arch.inspect}" unless host_arch == "arm64"
+
+translated = `/usr/sbin/sysctl -in sysctl.proc_translated 2>/dev/null`.strip
+raise "Do not run Vagrant under Rosetta; start a native arm64 terminal" if translated == "1"
+
+runner_ip, runner_netmask, vmnet_name = fusion_host_only_network(PREFERRED_IP)
+puts "GitLab Runner host-only address: #{runner_ip} (#{vmnet_name}, netmask #{runner_netmask})"
+
+# Make plain `vagrant up` use VMware Desktop. No VirtualBox, QEMU, Rosetta, or
+# alternate-provider configuration is defined by this lab.
+ENV["VAGRANT_DEFAULT_PROVIDER"] ||= "vmware_desktop"
+
+Vagrant.configure("2") do |config|
+  # This Bento release publishes a vmware_desktop/arm64 artifact. The separate
+  # architecture setting prevents Vagrant from selecting another architecture.
+  config.vm.box = BOX_NAME
+  config.vm.box_version = BOX_VERSION
+  config.vm.box_architecture = "arm64"
+  config.vm.hostname = "gitlab-runner.local"
+  config.vm.boot_timeout = 600
+  config.vm.synced_folder "~/SCM/SkillSpector/", "/home/vagrant/SkillSpector"
+
+  # NAT remains available for package downloads; this host-only NIC provides
+  # stable host-to-runner and GitLab-to-runner lab connectivity.
+  config.vm.network "private_network", ip: runner_ip, netmask: runner_netmask
+
+  config.vm.provider "vmware_desktop" do |vmware|
+    vmware.gui = false
+    vmware.vmx["displayName"] = "devsecops-gitlab-runner"
+    vmware.vmx["numvcpus"] = "2"
+    vmware.vmx["memsize"] = "4096"
+  end
+
+  config.vm.provision "shell",
+    privileged: true,
+    env: {
+      "RUNNER_DNS_JSON" => RUNNER_DNS_JSON,
+      "DOCKER_INSECURE_REGISTRIES_JSON" => DOCKER_INSECURE_REGISTRIES_JSON,
+      "GITLAB_URL" => GITLAB_URL,
+      "GITLAB_RUNNER_NAME" => GITLAB_RUNNER_NAME,
+      "GITLAB_RUNNER_TOKEN" => GITLAB_RUNNER_TOKEN,
+    },
+    inline: <<-'SHELL'
+    set -Eeuo pipefail
+
+    log() {
+      printf '[gitlab-runner] %s\n' "$*"
+    }
+
+    fail() {
+      printf '[gitlab-runner] ERROR: %s\n' "$*" >&2
+      exit 1
+    }
+
+    export DEBIAN_FRONTEND=noninteractive
+    export TZ=Asia/Bangkok
+
+    log "Verifying native ARM64 Ubuntu 24.04 guest"
+    [ "$(uname -m)" = "aarch64" ] || fail "Expected uname -m to report aarch64; got $(uname -m)"
+    [ "$(dpkg --print-architecture)" = "arm64" ] || fail "Expected dpkg architecture arm64"
+
+    # shellcheck disable=SC1091
+    . /etc/os-release
+    [ "$ID" = "ubuntu" ] || fail "Expected Ubuntu; detected $ID"
+    [ "$VERSION_ID" = "24.04" ] || fail "Expected Ubuntu 24.04; detected $VERSION_ID"
+
+    log "Configuring timezone and prerequisite packages"
+    timedatectl set-timezone Asia/Bangkok
+    apt-get update
+    apt-get install -y --no-install-recommends curl ca-certificates git gnupg jq openssh-client tzdata
+
+    repo_file="/etc/apt/sources.list.d/runner_gitlab-runner.list"
+    if [ ! -s "$repo_file" ]; then
+      log "Adding the official GitLab Runner repository"
+      repo_script="$(mktemp)"
+      trap 'rm -f "$repo_script"' EXIT
+      curl --fail --silent --show-error --location \
+        "https://packages.gitlab.com/install/repositories/runner/gitlab-runner/script.deb.sh" \
+        --output "$repo_script"
+      bash "$repo_script"
+      rm -f "$repo_script"
+      trap - EXIT
+    else
+      log "Official GitLab Runner repository is already configured"
+    fi
+
+    apt-get update
+
+    log "Verifying that the repository offers a native arm64 package"
+    candidate="$(apt-cache policy gitlab-runner:arm64 | awk '/Candidate:/ { value = $2 } END { print value }')"
+    [ -n "$candidate" ] && [ "$candidate" != "(none)" ] || \
+      fail "No native gitlab-runner:arm64 package is available for Ubuntu 24.04"
+
+    if dpkg-query -W -f='${db:Status-Status}' gitlab-runner 2>/dev/null | \
+        awk 'END { exit($0 == "installed" ? 0 : 1) }'; then
+      installed_arch="$(dpkg-query -W -f='${Architecture}' gitlab-runner)"
+      [ "$installed_arch" = "arm64" ] || fail "Installed GitLab Runner package is $installed_arch, not arm64"
+      log "GitLab Runner is already installed; skipping installation"
+    else
+      log "Installing native GitLab Runner package ($candidate)"
+      apt-get install -y gitlab-runner:arm64 || fail "GitLab Runner package installation failed"
+    fi
+
+    trivy_keyring="/usr/share/keyrings/trivy.gpg"
+    trivy_repo_file="/etc/apt/sources.list.d/trivy.list"
+    trivy_repo="deb [arch=arm64 signed-by=$trivy_keyring] https://aquasecurity.github.io/trivy-repo/deb generic main"
+
+    if [ ! -s "$trivy_keyring" ]; then
+      log "Installing the Aqua Security Trivy repository signing key"
+      trivy_key="$(mktemp)"
+      trap 'rm -f "$trivy_key"' EXIT
+      curl --fail --silent --show-error --location \
+        "https://aquasecurity.github.io/trivy-repo/deb/public.key" \
+        --output "$trivy_key"
+      gpg --dearmor --batch --yes --output "$trivy_keyring" "$trivy_key" || \
+        fail "Could not install the Trivy repository signing key"
+      chmod 0644 "$trivy_keyring"
+      rm -f "$trivy_key"
+      trap - EXIT
+    else
+      log "Trivy repository signing key is already installed"
+    fi
+
+    if [ ! -f "$trivy_repo_file" ] || [ "$(cat "$trivy_repo_file")" != "$trivy_repo" ]; then
+      log "Configuring the official Trivy ARM64 repository"
+      printf '%s\n' "$trivy_repo" > "$trivy_repo_file"
+    else
+      log "Official Trivy repository is already configured"
+    fi
+
+    apt-get update
+
+    log "Verifying that the Trivy repository offers a native arm64 package"
+    trivy_candidate="$(apt-cache policy trivy:arm64 | awk '/Candidate:/ { value = $2 } END { print value }')"
+    [ -n "$trivy_candidate" ] && [ "$trivy_candidate" != "(none)" ] || \
+      fail "No native trivy:arm64 package is available from the official repository"
+
+    if dpkg-query -W -f='${db:Status-Status}' trivy 2>/dev/null | \
+        awk 'END { exit($0 == "installed" ? 0 : 1) }'; then
+      trivy_arch="$(dpkg-query -W -f='${Architecture}' trivy)"
+      [ "$trivy_arch" = "arm64" ] || fail "Installed Trivy package is $trivy_arch, not arm64"
+      log "Trivy is already installed; skipping installation"
+    else
+      log "Installing native Trivy package ($trivy_candidate)"
+      apt-get install -y trivy:arm64 || fail "Trivy package installation failed"
+    fi
+
+    gitleaks_version="8.30.1"
+    gitleaks_archive="gitleaks_${gitleaks_version}_linux_arm64.tar.gz"
+    gitleaks_checksum="e4a487ee7ccd7d3a7f7ec08657610aa3606637dab924210b3aee62570fb4b080"
+
+    installed_gitleaks_version=""
+    if command -v gitleaks >/dev/null 2>&1; then
+      installed_gitleaks_version="$(gitleaks version 2>/dev/null || true)"
+    fi
+
+    if [ "$installed_gitleaks_version" = "$gitleaks_version" ]; then
+      log "Gitleaks $gitleaks_version is already installed; skipping installation"
+    else
+      log "Installing Gitleaks $gitleaks_version for native ARM64"
+      gitleaks_tmp="$(mktemp -d)"
+      trap 'rm -rf "$gitleaks_tmp"' EXIT
+
+      curl --fail --silent --show-error --location \
+        "https://github.com/gitleaks/gitleaks/releases/download/v${gitleaks_version}/${gitleaks_archive}" \
+        --output "$gitleaks_tmp/$gitleaks_archive"
+
+      printf '%s  %s\n' "$gitleaks_checksum" "$gitleaks_tmp/$gitleaks_archive" | \
+        sha256sum --check --strict - || fail "Gitleaks archive checksum verification failed"
+
+      tar -xzf "$gitleaks_tmp/$gitleaks_archive" -C "$gitleaks_tmp" gitleaks || \
+        fail "Could not extract the Gitleaks executable"
+      install -m 0755 "$gitleaks_tmp/gitleaks" /usr/local/bin/gitleaks
+
+      rm -rf "$gitleaks_tmp"
+      trap - EXIT
+    fi
+
+    [ "$(gitleaks version 2>/dev/null)" = "$gitleaks_version" ] || \
+      fail "Gitleaks executable health check failed"
+
+    docker_keyring_dir="/etc/apt/keyrings"
+    docker_keyring="$docker_keyring_dir/docker.asc"
+    docker_repo_file="/etc/apt/sources.list.d/docker.sources"
+    docker_codename="${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+    docker_repo="$(printf '%s\n' \
+      'Types: deb' \
+      'URIs: https://download.docker.com/linux/ubuntu' \
+      "Suites: $docker_codename" \
+      'Components: stable' \
+      'Architectures: arm64' \
+      "Signed-By: $docker_keyring")"
+
+    install -m 0755 -d "$docker_keyring_dir"
+    if [ ! -s "$docker_keyring" ]; then
+      log "Installing Docker's official repository signing key"
+      docker_key_tmp="$(mktemp)"
+      trap 'rm -f "$docker_key_tmp"' EXIT
+      curl --fail --silent --show-error --location \
+        "https://download.docker.com/linux/ubuntu/gpg" \
+        --output "$docker_key_tmp"
+      install -m 0644 "$docker_key_tmp" "$docker_keyring"
+      rm -f "$docker_key_tmp"
+      trap - EXIT
+    else
+      log "Docker repository signing key is already installed"
+    fi
+
+    if [ ! -f "$docker_repo_file" ] || [ "$(cat "$docker_repo_file")" != "$docker_repo" ]; then
+      log "Configuring Docker's official Ubuntu ARM64 repository"
+      printf '%s\n' "$docker_repo" > "$docker_repo_file"
+    else
+      log "Official Docker repository is already configured"
+    fi
+
+    apt-get update
+
+    log "Verifying that Docker Engine is available for native arm64"
+    docker_candidate="$(apt-cache policy docker-ce:arm64 | awk '/Candidate:/ { value = $2 } END { print value }')"
+    [ -n "$docker_candidate" ] && [ "$docker_candidate" != "(none)" ] || \
+      fail "No native docker-ce:arm64 package is available for Ubuntu 24.04"
+
+    docker_packages=(
+      docker-ce
+      docker-ce-cli
+      containerd.io
+      docker-buildx-plugin
+      docker-compose-plugin
+    )
+    docker_install_needed="false"
+
+    for package in "${docker_packages[@]}"; do
+      if dpkg-query -W -f='${db:Status-Status}' "$package" 2>/dev/null | \
+          awk 'END { exit($0 == "installed" ? 0 : 1) }'; then
+        package_arch="$(dpkg-query -W -f='${Architecture}' "$package")"
+        [ "$package_arch" = "arm64" ] || fail "Installed $package package is $package_arch, not arm64"
+      else
+        docker_install_needed="true"
+      fi
+    done
+
+    if [ "$docker_install_needed" = "true" ]; then
+      log "Installing native Docker Engine ($docker_candidate), Buildx, and Compose"
+      apt-get install -y \
+        docker-ce:arm64 \
+        docker-ce-cli:arm64 \
+        containerd.io:arm64 \
+        docker-buildx-plugin:arm64 \
+        docker-compose-plugin:arm64 || fail "Docker Engine installation failed"
+    else
+      log "Docker Engine, Buildx, and Compose are already installed; skipping installation"
+    fi
+
+    log "Configuring Docker containers to use the VPN-reachable DNS servers"
+    docker_config="/etc/docker/daemon.json"
+    docker_config_tmp="$(mktemp)"
+    trap 'rm -f "$docker_config_tmp"' EXIT
+
+    if [ -s "$docker_config" ]; then
+      jq \
+        --argjson dns "$RUNNER_DNS_JSON" \
+        --argjson insecure_registries "$DOCKER_INSECURE_REGISTRIES_JSON" \
+        '.dns = $dns | ."insecure-registries" = $insecure_registries' \
+        "$docker_config" > "$docker_config_tmp" || fail "Could not update $docker_config"
+    else
+      jq \
+        --argjson dns "$RUNNER_DNS_JSON" \
+        --argjson insecure_registries "$DOCKER_INSECURE_REGISTRIES_JSON" \
+        -n '{dns: $dns, "insecure-registries": $insecure_registries}' \
+        > "$docker_config_tmp" || fail "Could not create $docker_config"
+    fi
+
+    install -m 0644 "$docker_config_tmp" "$docker_config"
+    rm -f "$docker_config_tmp"
+    trap - EXIT
+
+    # This template makes future non-interactive registrations inherit the
+    # same DNS behavior. Use it with: gitlab-runner register --template-config
+    # /etc/gitlab-runner/config.template.toml
+    runner_template="/etc/gitlab-runner/config.template.toml"
+    {
+      printf '%s\n' '[[runners]]'
+      printf '%s\n' '  [runners.docker]'
+      printf '    dns = %s\n' "$RUNNER_DNS_JSON"
+      printf '%s\n' '    helper_image_flavor = "ubuntu"'
+    } > "$runner_template"
+    chmod 0600 "$runner_template"
+
+    # Registration is deliberately separate from provisioning. If this VM is
+    # already registered, bring its Docker executor settings in line without
+    # replacing its URL, token, tags, or other runner-specific configuration.
+    runner_config="/etc/gitlab-runner/config.toml"
+    update_runner_docker_setting() {
+      file="$1"
+      key="$2"
+      rendered_value="$3"
+
+      if grep -Eq "^[[:space:]]*${key}[[:space:]]*=" "$file"; then
+        sed -Ei "s|^[[:space:]]*${key}[[:space:]]*=.*$|    ${key} = ${rendered_value}|" "$file"
+      else
+        setting="    ${key} = ${rendered_value}"
+        updated="$(mktemp)"
+        awk -v setting="$setting" '
+          /^[[:space:]]*\[runners\.docker\][[:space:]]*$/ {
+            print
+            print setting
+            next
+          }
+          { print }
+        ' "$file" > "$updated"
+        install -m 0600 -o root -g root "$updated" "$file"
+        rm -f "$updated"
+      fi
+    }
+
+    if [ ! -s "$runner_config" ] && [ -n "$GITLAB_RUNNER_TOKEN" ]; then
+      log "Registering $GITLAB_RUNNER_NAME with $GITLAB_URL"
+      gitlab-runner register \
+        --non-interactive \
+        --url "$GITLAB_URL" \
+        --token "$GITLAB_RUNNER_TOKEN" \
+        --name "$GITLAB_RUNNER_NAME" \
+        --executor docker \
+        --docker-image "alpine:3.20" \
+        --template-config "$runner_template" || fail "GitLab Runner registration failed"
+    fi
+
+    if [ -s "$runner_config" ]; then
+      if grep -Eq '^[[:space:]]*\[runners\.docker\][[:space:]]*$' "$runner_config"; then
+        log "Updating the registered runner's Docker DNS and helper image flavor"
+        update_runner_docker_setting "$runner_config" "dns" "$RUNNER_DNS_JSON"
+        update_runner_docker_setting "$runner_config" "helper_image_flavor" '"ubuntu"'
+      else
+        fail "$runner_config exists but has no [runners.docker] section"
+      fi
+    else
+      log "Runner is not registered yet; wrote registration defaults to $runner_template"
+      log "Set GITLAB_RUNNER_TOKEN and run vagrant provision to register it"
+    fi
+
+    log "Enabling and restarting Docker with the managed daemon configuration"
+    systemctl enable containerd.service docker.service || fail "Could not enable Docker services"
+    systemctl restart containerd.service docker.service || fail "Could not restart Docker services"
+    systemctl is-active --quiet docker.service || fail "docker.service is not active"
+    usermod -aG docker gitlab-runner
+
+    runner_groups="$(id -nG gitlab-runner)"
+    case " $runner_groups " in
+      *" docker "*) ;;
+      *) fail "The gitlab-runner user was not added to the docker group" ;;
+    esac
+
+    # Restart so the service process receives its new docker group membership.
+    log "Enabling and restarting GitLab Runner"
+    systemctl enable gitlab-runner.service || fail "Could not enable gitlab-runner.service"
+    systemctl restart gitlab-runner.service || fail "Could not restart gitlab-runner.service"
+    systemctl is-active --quiet gitlab-runner.service || fail "gitlab-runner.service is not active"
+
+    gitlab-runner --version
+    trivy --version || fail "Trivy executable health check failed"
+    gitleaks version
+    docker version --format 'Docker Engine {{.Server.Version}} ({{.Server.Arch}})' || \
+      fail "Docker Engine health check failed"
+    docker buildx version || fail "Docker Buildx health check failed"
+    docker compose version || fail "Docker Compose health check failed"
+    runuser -u gitlab-runner -- docker info >/dev/null || \
+      fail "The gitlab-runner user cannot access Docker"
+
+    log "GitLab Runner, security scanners, and Docker are healthy and ready"
+  SHELL
+end
