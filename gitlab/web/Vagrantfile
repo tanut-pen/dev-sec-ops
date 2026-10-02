@@ -1,0 +1,115 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+require "ipaddr"
+
+BOX_NAME          = "bento/ubuntu-24.04"
+BOX_VERSION       = "202510.26.0"
+PREFERRED_IP      = "192.168.56.20"
+DEFAULT_NETMASK   = "255.255.255.0"
+VMWARE_NETWORKING = "/Library/Preferences/VMware Fusion/networking"
+
+# Read Fusion's existing vmnet configuration. Modern macOS releases do not let
+# Vagrant create arbitrary VMware subnets reliably, so use an existing host-only
+# vmnet and keep the requested address only when that vmnet actually contains it.
+def fusion_host_only_network(preferred_ip)
+  networks = Hash.new { |hash, key| hash[key] = {} }
+
+  if File.readable?(VMWARE_NETWORKING)
+    File.foreach(VMWARE_NETWORKING) do |line|
+      next unless line =~ /^answer VNET_(\d+)_(HOSTONLY_SUBNET|HOSTONLY_NETMASK|VIRTUAL_ADAPTER|NAT)\s+(\S+)/
+
+      number, property, value = Regexp.last_match.captures
+      networks[number][property] = value
+    end
+  end
+
+  host_only = networks.select do |_number, properties|
+    properties["HOSTONLY_SUBNET"] &&
+      properties["HOSTONLY_NETMASK"] &&
+      properties["VIRTUAL_ADAPTER"] == "yes" &&
+      properties["NAT"] != "yes"
+  end
+
+  requested_ip = ENV.fetch("GITLAB_PRIVATE_IP", preferred_ip)
+  IPAddr.new(requested_ip, Socket::AF_INET)
+
+  selected = host_only.find do |_number, properties|
+    network = IPAddr.new("#{properties.fetch("HOSTONLY_SUBNET")}/#{properties.fetch("HOSTONLY_NETMASK")}")
+    network.include?(requested_ip)
+  end
+
+  if selected
+    number, properties = selected
+    return [requested_ip, properties.fetch("HOSTONLY_NETMASK"), "vmnet#{number}"]
+  end
+
+  if ENV.key?("GITLAB_PRIVATE_IP")
+    raise "GITLAB_PRIVATE_IP=#{requested_ip} is not in an existing VMware Fusion host-only subnet"
+  end
+
+  # Prefer Fusion's conventional host-only vmnet1; otherwise use the first
+  # non-NAT host-only vmnet and reserve host number 20 within that subnet.
+  selected = host_only.find { |number, _properties| number == "1" } ||
+             host_only.sort_by { |number, _properties| number.to_i }.first
+
+  unless selected
+    warn "WARNING: Could not read an existing Fusion host-only vmnet; trying #{preferred_ip}/24."
+    warn "Inspect #{VMWARE_NETWORKING} and set GITLAB_PRIVATE_IP if Vagrant cannot attach the network."
+    return [preferred_ip, DEFAULT_NETMASK, "auto-detected vmnet"]
+  end
+
+  number, properties = selected
+  subnet = IPAddr.new("#{properties.fetch("HOSTONLY_SUBNET")}/#{properties.fetch("HOSTONLY_NETMASK")}")
+  candidate = IPAddr.new(subnet.to_i + 20, Socket::AF_INET).to_s
+
+  warn "NOTICE: #{preferred_ip} is not on a configured Fusion host-only subnet."
+  warn "NOTICE: Using #{candidate} on vmnet#{number} instead."
+  [candidate, properties.fetch("HOSTONLY_NETMASK"), "vmnet#{number}"]
+rescue IPAddr::InvalidAddressError => e
+  raise "Invalid GitLab private network configuration: #{e.message}"
+end
+
+host_arch = `/usr/bin/uname -m`.strip
+raise "This lab requires an Apple Silicon arm64 host; detected #{host_arch.inspect}" unless host_arch == "arm64"
+
+translated = `/usr/sbin/sysctl -in sysctl.proc_translated 2>/dev/null`.strip
+raise "Do not run Vagrant under Rosetta; start a native arm64 terminal" if translated == "1"
+
+gitlab_ip, gitlab_netmask, vmnet_name = fusion_host_only_network(PREFERRED_IP)
+puts "GitLab host-only address: #{gitlab_ip} (#{vmnet_name}, netmask #{gitlab_netmask})"
+
+# Make plain `vagrant up` select VMware Desktop. This file intentionally defines
+# no VirtualBox, emulation, or alternate-provider configuration.
+ENV["VAGRANT_DEFAULT_PROVIDER"] ||= "vmware_desktop"
+
+Vagrant.configure("2") do |config|
+  config.vm.box = BOX_NAME
+  config.vm.box_version = BOX_VERSION
+  config.vm.box_architecture = "arm64"
+  config.vm.hostname = "gitlab.local"
+  config.vm.boot_timeout = 900
+
+  # Vagrant retains its default NAT NIC for management and package downloads.
+  # This second NIC is an existing Fusion private/host-only network and is the
+  # only interface used to expose GitLab to the macOS host.
+  config.vm.network "private_network", ip: gitlab_ip, netmask: gitlab_netmask
+
+  # Resize the box's primary virtual disk. Ubuntu cloud-init grows the root
+  # partition/filesystem on first boot to consume the added capacity.
+  # VMware Desktop 3.0.5 may receive human-readable disk sizes before Vagrant
+  # normalizes them. Supplying bytes avoids its String-vs-Integer comparison bug.
+  config.vm.disk :disk, size: 80 * 1024**3, primary: true
+
+  config.vm.provider "vmware_desktop" do |vmware|
+    vmware.gui = false
+    vmware.linked_clone = false
+    vmware.vmx["displayName"] = "devsecops-gitlab"
+    vmware.vmx["numvcpus"] = "4"
+    vmware.vmx["memsize"] = "8192"
+  end
+
+  config.vm.provision "shell",
+    path: "scripts/install-gitlab.sh",
+    args: [gitlab_ip]
+end

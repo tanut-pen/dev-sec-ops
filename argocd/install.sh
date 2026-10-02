@@ -21,3 +21,8 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 kubectl --kubeconfig=path/to/config-rancher-lab config get-contexts
 
 export KUBECONFIG=~/.kube/config:~/.kube/config-rancher-lab
+
+# uninstall
+# helm uninstall argocd argo/argo-cd --namespace argocd
+# helm uninstall argo-rollouts argo/argo-rollouts --namespace argo-rollouts
+# kubectl get crd -o name | grep argoproj.io | xargs kubectl delete
