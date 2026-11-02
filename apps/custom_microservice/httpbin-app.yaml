@@ -57,6 +57,8 @@ spec:
           env:
             - name: NAME
               value: "HTTPBIN"
+            - name: SUR_NAME
+              value: "HTTPBIN"
           resources:
             requests:
               cpu: 50m
