@@ -31,6 +31,9 @@ spec:
           image: kennethreitz/httpbin:latest
           ports:
             - containerPort: 80
+          env:
+            - name: NAME
+              value: "HTTPBIN"
           resources:
             requests:
               cpu: 50m
