@@ -3,8 +3,8 @@
 # A classic HTTP request & response inspection service.
 # Image: kennethreitz/httpbin
 # ──────────────────────────────────────────────────────────────────────────────
-apiVersion: apps/v1
-kind: Deployment
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
 metadata:
   name: httpbin
   namespace: demo
@@ -15,6 +15,12 @@ spec:
   selector:
     matchLabels:
       app: httpbin
+  strategy:
+    canary:
+      steps:
+        - setWeight: 10
+        - pause:
+            duration: 30s
   template:
     metadata:
       labels:
