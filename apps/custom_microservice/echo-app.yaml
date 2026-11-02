@@ -21,8 +21,8 @@ spec:
         vault.hashicorp.com/agent-inject-secret-db: "demo/db/data/postgres"
         vault.hashicorp.com/agent-inject-template-db: |
           {{- with secret "demo/db/data/postgres" -}}
-          username={{ .Data.data.username }}
-          password={{ .Data.data.password }}
+          DB_USERNAME={{ .Data.data.DB_USERNAME }}
+          DB_PASSWORD={{ .Data.data.DB_PASSWORD }}
           {{- end }}
 
         vault.hashicorp.com/agent-inject-perms-db: "0400"
