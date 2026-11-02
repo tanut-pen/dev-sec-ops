@@ -1,0 +1,12 @@
+controller:
+  replicas: 1
+
+defaultVaultConnection:
+  enabled: false
+
+defaultAuthMethod:
+  enabled: false
+
+telemetry:
+  serviceMonitor:
+    enabled: false
