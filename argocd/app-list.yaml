@@ -1,26 +1,66 @@
+---
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: envoy
+  name: vault-secrets-operator
   namespace: argocd
-  labels:
-    app.kubernetes.io/part-of: devsecops-lab
-    app.kubernetes.io/name: envoy
 spec:
-  revisionHistoryLimit: 3
   project: default
-  source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-    targetRevision: HEAD
-    path: apps/envoy/deployment
-    directory:
-      recurse: true
+
+  sources:
+    - repoURL: https://helm.releases.hashicorp.com
+      chart: vault-secrets-operator
+      targetRevision: "1.6.0"
+      helm:
+        releaseName: vault-secrets-operator
+        valueFiles:
+          - $values/apps/vault/vso-values.yaml
+
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: main
+      ref: values
+
   destination:
     server: https://kubernetes.default.svc
-    namespace: default
+    namespace: vault-secrets-operator
+
   syncPolicy:
     automated:
-      selfHeal: true
       prune: true
+      selfHeal: true
+
+    syncOptions:
+      - CreateNamespace=true
+---
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: vault
+  namespace: argocd
+spec:
+  project: default
+
+  sources:
+    - repoURL: https://helm.releases.hashicorp.com
+      chart: vault
+      targetRevision: "0.32.0"
+      helm:
+        releaseName: vault
+        valueFiles:
+          - $values/apps/vault/vault-values.yaml
+
+    - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+      targetRevision: main
+      ref: values
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: vault
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+
     syncOptions:
       - CreateNamespace=true
