@@ -17,7 +17,7 @@ cd uptime-kuma
 ./install.sh
 ```
 
-Or sync via Argo CD (`uptime-kuma` Application in `argocd/app-list.yaml`).
+Or sync via Argo CD (add `apps/uptime-kuma` to the directory list in `argocd/app-of-apps.yaml`).
 
 ## Access
 
