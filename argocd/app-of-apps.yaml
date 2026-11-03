@@ -1,27 +1,64 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  name: app-of-apps
+  name: devsecops-apps
   namespace: argocd
   labels:
     app.kubernetes.io/part-of: devsecops-lab
-  # Finalizer ensures child apps are deleted when root app is deleted
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
-  project: default
-  source:
-    repoURL: https://github.com/tanut-pen/dev-sec-ops.git
-    targetRevision: HEAD
-    path: argocd
-    directory:
-      include: "app-list.yaml"
-  destination:
-    server: https://kubernetes.default.svc
-    namespace: argocd
-  syncPolicy:
-    automated:
-      prune: true       # remove Applications deleted from app-list.yaml
-      selfHeal: true    # re-apply if someone manually changes the cluster
-    syncOptions:
-      - CreateNamespace=true
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # One Application per matching directory. Add a folder under `apps/` to the
+    # include list to deploy it (most folders only hold install.sh/values).
+    - git:
+        repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+        revision: HEAD
+        directories:
+          - path: apps/custom_microservice
+          - path: apps/vault
+  template:
+    metadata:
+      name: '{{ .path.basename | replace "_" "-" }}'
+      labels:
+        app.kubernetes.io/part-of: devsecops-lab
+      # Ensures child resources are deleted when the Application is deleted
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      revisionHistoryLimit: 3
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{ .path.basename | replace "_" "-" }}'
+      syncPolicy:
+        automated:
+          prune: true       # remove resources deleted from Git
+          selfHeal: true    # re-apply if someone manually changes the cluster
+        syncOptions:
+          - CreateNamespace=true
+  # Per-app source definitions (plain path vs. Helm chart + values from this repo)
+  templatePatch: |
+    spec:
+    {{- if eq .path.basename "vault" }}
+      sources:
+        - repoURL: https://helm.releases.hashicorp.com
+          chart: vault
+          targetRevision: "0.32.0"
+          helm:
+            releaseName: vault
+            valueFiles:
+              - $values/apps/vault/vault-values.yaml
+        - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+          targetRevision: main
+          ref: values
+    {{- else }}
+      source:
+        repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+        targetRevision: HEAD
+        path: '{{ .path.path }}'
+    {{- end }}
+    {{- if eq .path.basename "custom_microservice" }}
+      destination:
+        namespace: demo
+    {{- end }}

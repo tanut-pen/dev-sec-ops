@@ -65,8 +65,7 @@ This lab gives you hands-on experience with real DevSecOps tools in a local, saf
 │   ├── vault/
 │   └── vulnerability-application/
 ├── argocd/                # Argo CD bootstrap and control plane config
-│   ├── app-list.yaml      # Argo CD Application list
-│   └── app-of-apps.yaml   # Root app-of-apps bootstrap Application
+│   └── app-of-apps.yaml   # Root ApplicationSet that generates Applications from apps/
 ├── static/                # Cluster-wide static resources (Ingresses, RBAC)
 ├── CLAUDE.md              # Token & credential reference
 └── apply.sh               # Bootstrap script
