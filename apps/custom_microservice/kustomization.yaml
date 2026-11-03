@@ -6,7 +6,7 @@ namespace: demo
 resources:
   - namespace.yaml
   - echo-app.yaml
-  - echo-ingress.yaml
+  - ingress.yaml
   - httpbin-app.yaml
 
 labels:
