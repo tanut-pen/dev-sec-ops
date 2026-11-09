@@ -1,694 +1,258 @@
-# DevSecOps Local Lab
+# DevSecOps Lab
 
-This repository provisions a small local DevSecOps environment on Kubernetes and includes a Jenkins pipeline that demonstrates a basic secure CI flow.
+A GitOps-driven DevSecOps lab on Kubernetes. It bundles the CI/CD, security scanning, registry, secrets, gateway and observability tooling needed to run a secure delivery pipeline end to end, plus VM-based environments (RKE2, GitLab) to host it.
 
-## What is DevSecOps?
+## Contents
 
-**DevSecOps** means integrating security practices throughout the entire software development lifecycle (development, security, and operations). This lab demonstrates a complete pipeline where:
+- [What's included](#whats-included)
+- [Repository layout](#repository-layout)
+- [Prerequisites](#prerequisites)
+- [Getting started](#getting-started)
+- [Deploying apps](#deploying-apps)
+- [Service ports](#service-ports)
+- [Ingress](#ingress)
+- [Jenkins pipelines](#jenkins-pipelines)
+- [VM environments](#vm-environments)
+- [Secrets](#secrets)
+- [Troubleshooting](#troubleshooting)
+- [Cleanup](#cleanup)
 
-- **Code is scanned** for vulnerabilities (SonarQube)
-- **Container images are checked** for security issues (Trivy)
-- **Vulnerabilities are tracked** and managed (DefectDojo)
-- **Changes are deployed safely** using GitOps (Argo CD)
-- **Health is monitored** (Grafana, Uptime Kuma)
-- **Secrets are managed securely** (Vault, Kubeseal)
+## What's included
 
-This lab gives you hands-on experience with real DevSecOps tools in a local, safe environment.
+| Area | Tools |
+|------|-------|
+| CI/CD | Jenkins, Argo CD, Argo Rollouts, GitLab (VM) |
+| Code & image security | SonarQube, Trivy, OWASP ZAP, DefectDojo |
+| Registry | Harbor |
+| Secrets | Vault, Sealed Secrets (kubeseal) |
+| Networking | Kong Gateway, Istio, Envoy AI Gateway |
+| AI gateways | LiteLLM, Bifrost, Kubernetes MCP server, MCP server |
+| Observability | Grafana / Prometheus, Loki, Tempo, Grafana Alloy, Uptime Kuma |
+| Data & messaging | Postgres, MySQL, RabbitMQ |
+| Cluster UI | Portainer, Headlamp |
 
-## The stack in this repo includes:
-
-- `k3d` for a local Kubernetes cluster
-- `Helm` for installing platform components
-- `Jenkins` for CI/CD orchestration
-- `SonarQube` for static code analysis
-- `Harbor` for container image storage
-- `DefectDojo` for vulnerability report import and tracking
-- `Argo CD` for GitOps-style delivery
-- `Istio` for service mesh traffic management
-- `Grafana Stack` for monitoring, dashboards, and alerting
-- `Grafana Alloy` for telemetry collection pipelines
-- `Trivy` for container image scanning
-- `Vault` for secrets management
-- `Uptime Kuma` for uptime monitoring
-- `Portainer` for Kubernetes UI management
-- `Kubeseal` (Sealed Secrets) for encrypted Kubernetes secrets
-- `Kong Gateway` as an API gateway and Kubernetes Ingress controller
-- `GitLab` as an optional self-hosted Git server
-- `Postgres` for database services
-- `LiteLLM` for AI model routing and proxying
-
-## Project Structure
+## Repository layout
 
 ```text
 .
-├── apps/                  # Application and service deployments
-│   ├── alpine/
-│   ├── custom_microservice/
+├── apps/                       # One folder per service (Helm values, manifests, install.sh)
+│   ├── bifrost/                # Bifrost AI gateway
+│   ├── custom_microservice/    # Demo workloads (echo, httpbin) deployed via Argo CD
 │   ├── defectdojo/
-│   ├── grafana/
-│   ├── grafana-alloy/
+│   ├── envoy/                  # Envoy AI Gateway
 │   ├── harbor/
 │   ├── istio/
-│   ├── jenkins/
+│   ├── jenkins/                # Jenkins + demo and ZAP pipelines
+│   ├── jenkins-dashboard/
 │   ├── kong/
 │   ├── kubernetes-mcp-server/
 │   ├── kubeseal/
 │   ├── litellm/
+│   ├── loki/
+│   ├── mcpserver/
+│   ├── monitoring/             # Grafana, Alloy and Tempo values
 │   ├── mysql/
-│   ├── nginx/
-│   ├── ollama-deepseek/
-│   ├── ollama-qwen/
 │   ├── portainer/
 │   ├── postgres/
+│   ├── rabbitmq/
 │   ├── sonarqube/
 │   ├── uptime-kuma/
 │   ├── vault/
 │   └── vulnerability-application/
-├── argocd/                # Argo CD bootstrap and control plane config
-│   └── app-of-apps.yaml   # Root ApplicationSet that generates Applications from apps/
-├── static/                # Cluster-wide static resources (Ingresses, RBAC)
-├── CLAUDE.md              # Token & credential reference
-└── apply.sh               # Bootstrap script
+├── argocd/                     # Argo CD install, values and the root ApplicationSet
+├── gitlab/                     # Vagrant setups for a GitLab server (web) and runner
+├── headlamp/                   # Headlamp install
+├── static/                     # Cluster-wide Ingress and RBAC manifests
+├── vm/                         # RKE2 multi-node lab (Vagrant) and Rancher Manager
+└── apply.sh                    # Bootstrap: Argo CD, root ApplicationSet, Postgres
 ```
 
-## What This Project Does
-
-This project is designed as a local DevSecOps lab. It creates a Kubernetes environment and installs the core tools needed to run a simple secure delivery pipeline.
-
-It also includes a monitoring stack so you can observe the health of the local platform with Grafana dashboards backed by Prometheus, and Uptime Kuma for service uptime tracking.
-
-The included Jenkins pipeline performs these steps:
-
-1. Clone a demo application from GitHub.
-2. Install Node.js dependencies for `client` and `backend`.
-3. Run tests if a `test` script exists.
-4. Run SonarQube analysis.
-5. Build a Docker image.
-6. Scan the image with Trivy.
-7. Optionally push the image to Harbor.
-8. Optionally import the Trivy report into DefectDojo.
+Most folders under `apps/` have their own `readme.md` with service-specific details.
 
 ## Prerequisites
 
-You need to install these tools on your machine before using this repository. **Don't worry if you don't have them yet — installation links and instructions are below.**
+| Tool | Purpose |
+|------|---------|
+| [Docker](https://docs.docker.com/get-docker/) or [Rancher Desktop](https://rancherdesktop.io/) | Container runtime |
+| [kubectl](https://kubernetes.io/docs/tasks/tools/) | Cluster CLI |
+| [Helm](https://helm.sh/docs/intro/install/) | Installs the charts |
+| A Kubernetes cluster | Rancher Desktop, k3d, or the RKE2 lab in [`vm/`](vm/README.md) |
+| [kubeseal](https://github.com/bitnami-labs/sealed-secrets#installation) | Encrypting secrets (optional) |
+| [Vagrant](https://developer.hashicorp.com/vagrant) + VMware Fusion | Only for the `vm/` and `gitlab/` environments |
 
-### Required Tools
+Recommended: 8 GB RAM minimum (16 GB for the full stack) and 30 GB free disk.
 
-| Tool | Purpose | Installation |
-|------|---------|---------------|
-| **Docker** | Container runtime; runs your applications in isolated environments | [Install Docker](https://docs.docker.com/get-docker/) |
-| **Kubernetes (kubectl)** | Command-line tool to interact with Kubernetes clusters | [Install kubectl](https://kubernetes.io/docs/tasks/tools/) |
-| **Helm** | Package manager for Kubernetes; installs and manages applications | [Install Helm](https://helm.sh/docs/intro/install/) |
-| **k3d** | Creates lightweight local Kubernetes clusters using Docker | [Install k3d](https://k3d.io/#installation) |
-| **Kubeseal CLI** | Encrypts secrets for Kubernetes | [Install kubeseal](https://github.com/bitnami-labs/sealed-secrets#installation) |
-
-### System Requirements
-
-- **OS**: macOS, Linux, or Windows (with WSL2)
-- **RAM**: Minimum 8GB (16GB recommended for comfortable operation)
-- **Disk**: At least 30GB free space
-- **Container Runtime**: Docker or Rancher Desktop (both work with this project)
-
-#### Docker or Rancher Desktop?
-
-**Docker Desktop** — Traditional choice, industry standard. Requires Docker subscription for organizations.
-
-**Rancher Desktop** *(Recommended for this project)* — Free, open-source alternative with built-in Kubernetes support. Works seamlessly with k3d and includes all necessary components. [Install Rancher Desktop](https://rancherdesktop.io/)
-
-If using **Rancher Desktop**, you get:
-- ✅ Integrated Kubernetes (can skip k3d if you prefer)
-- ✅ Built-in containerd runtime
-- ✅ Free and open-source
-- ✅ No enterprise subscription required
-- ✅ Full compatibility with this project
-
-**Note:** This project requires container socket access (`/var/run/docker.sock` or Rancher Desktop equivalent). Both Docker Desktop and Rancher Desktop provide this by default.
-
-### Quick Verification
-
-After installing, verify everything is working:
+Check your setup:
 
 ```bash
-docker --version
-kubectl version --client
-helm version
-k3d version
-kubeseal --version
-```
-
-If all commands show version numbers, you're ready to proceed!
-
-## Quick Start (5–10 minutes)
-
-**Want to see it working quickly? Try this minimal setup:**
-
-```bash
-# 1. Clone this repository
-git clone <your-repo-url>
-cd dev-sec-ops
-
-# 2. Create a local Kubernetes cluster (takes ~2 minutes)
-./k3d/start.sh
-
-# 3. Verify the cluster is running
+docker --version && kubectl version --client && helm version
 kubectl get nodes
-
-# 4. Install just Jenkins and SonarQube (the essentials)
-cd apps/jenkins && ./install.sh && cd ../..
-cd apps/sonarqube && ./install.sh && cd ../..
-
-# 5. Get Jenkins admin password
-kubectl get secret -n jenkins $(kubectl get secret -n jenkins -o name | grep jenkins) -o jsonpath='{.data.jenkins-admin-password}' | base64 --decode
-
-# 6. Access Jenkins at http://localhost:30003
 ```
 
-That's it! You now have a working Jenkins + SonarQube pipeline running locally. To add more tools, follow the **Full Setup** section below.
+## Getting started
 
----
+1. Clone the repo and point `kubectl` at your cluster.
 
-## Full Setup Flow
+   ```bash
+   git clone git@github.com:tanut-pen/dev-sec-ops.git
+   cd dev-sec-ops
+   kubectl config current-context
+   ```
 
-### 1. Create the local cluster
+2. Bootstrap GitOps. This installs Argo CD and Argo Rollouts, applies the root ApplicationSet, then installs Postgres.
 
-```bash
-cd apps/k3d  # or wherever k3d/start.sh is located
-./start.sh
-```
+   ```bash
+   ./apply.sh
+   ```
 
-Creates a cluster named `my-cluster` with:
+   `argocd/install.sh` prints the initial `admin` password at the end.
 
-- 1 server node, 1 agent node
-- K3s image `rancher/k3s:v1.22.7-k3s1-amd64`
+3. Install any other service by running its script:
 
-**Verify:**
+   ```bash
+   ./apps/jenkins/install.sh
+   ./apps/sonarqube/install.sh
+   ./apps/harbor/install.sh
+   ```
 
-```bash
-kubectl get nodes
-kubectl get pods --all-namespaces
-```
+Each `install.sh` adds the Helm repo and runs `helm upgrade --install` into its own namespace, using the values file in the same folder. Read a script before running it, since some set NodePorts or expect local credentials.
 
-You should see 2 nodes in "Ready" status.
+## Deploying apps
 
-### 2. Install Jenkins
+### Through Argo CD (GitOps)
 
-```bash
-cd apps/jenkins
-./install.sh
-```
+[`argocd/app-of-apps.yaml`](argocd/app-of-apps.yaml) defines an ApplicationSet that creates one Application per listed directory. It currently deploys:
 
-- Namespace: `jenkins`
-- Service type: `NodePort` — port `30003`
-- Admin credentials: set by you for your local lab deployment
-- Persistent volume size: `8Gi`
+| Directory | Source |
+|-----------|--------|
+| `apps/custom_microservice` | Plain manifests (namespace `demo`) |
+| `apps/vault` | Vault Helm chart + `apps/vault/vault-values.yaml` |
+| `apps/bifrost` | Bifrost Helm chart + `apps/bifrost/bifrost-values.yaml` |
 
-### 7. Install Argo CD (GitOps Deployment)
+To deploy another app through Argo CD, add its path to the `directories` list in the ApplicationSet. Applications use automated sync with prune and self-heal, so Git is the source of truth.
 
-```bash
-cd argocd
-./install.sh
-```
+Other app lists live in `argocd/` (`app-list-all.yaml`, `app-list-demo.yaml`, `app-list-grafana.yaml`, `app-list-mcpserver.yaml`).
 
-- Namespace: `argocd`
-- Service type: `NodePort` — port `30004`
-- Ingress host: `argocd.local`
-- Server runs in insecure mode for local ingress compatibility
-- Also installs Argo Rollouts in namespace `argo-rollouts`
+### Directly with Helm
 
-### 8. Install Istio (Service Mesh)
+Run the app's `install.sh`. Use this for services not managed by Argo CD.
 
-```bash
-cd apps/istio
-./install.sh
-```
+## Service ports
 
-- Base/control plane namespace: `istio-system`
-- Ingress gateway namespace: `istio-ingress`
-- Charts: `istio/base`, `istio/istiod`, `istio/gateway`
-- Ingress gateway service type: `NodePort`
-- HTTP NodePort: `30080`
-- HTTPS NodePort: `30443`
+NodePorts set in the install scripts and values files. Check the script for the current value, since these can change.
 
-**Verify:**
+| Service | Port |
+|---------|------|
+| Jenkins | 30003 |
+| Argo CD | 30004 |
+| Grafana | 30005 |
+| Uptime Kuma | 30006 |
+| Kong Admin API | 30007 |
+| Kong HTTP / HTTPS proxy | 30008 / 30009 |
+| Portainer HTTP / HTTPS | 30777 / 30779 |
+| Istio ingress HTTP / HTTPS | 30080 / 30443 |
 
-```bash
-kubectl get pods -n istio-system
-kubectl get pods -n istio-ingress
-```
+## Ingress
 
----
+Ingress rules live in [`static/`](static/):
 
-### 9. Install Grafana Stack (Monitoring)
-
-```bash
-cd apps/grafana
-./install.sh
-```
-
-- Namespace: `grafana`
-- Chart: `prometheus-community/kube-prometheus-stack`
-- Grafana service type: `NodePort` — port `30005`
-- Admin credentials: set by you for your local lab deployment
-- Prometheus retention: `7d`
-- Ingress host: `grafana.local`
-
-### 10. Install Grafana Alloy (Telemetry Collection)
-
-```bash
-cd apps/grafana-alloy
-./install.sh
-```
-
-- Namespace: `grafana-alloy`
-- Chart: `grafana/alloy`
-- Controller: `DaemonSet`
-- Sends Alloy self metrics to the local Prometheus remote write endpoint
-
-**Verify:**
-
-```bash
-kubectl get daemonsets -n grafana-alloy
-```
-
----
-
-### 11. Install Vault (Secrets Management)
-
-```bash
-cd apps/vault
-./install.sh
-```
-
-- Namespace: `vault`
-- Chart: `hashicorp/vault`
-- Values file: `vault/vault-values.yaml`
-- Run `vault operator init` after install to get the root token and unseal keys
-
-### 12. Install Uptime Kuma (Monitoring)
-
-```bash
-cd apps/uptime-kuma
-./install.sh
-```
-
-- Namespace: `monitoring`
-- Chart: `uptime-kuma/uptime-kuma` from `helm.irsigler.cloud`
-- Service type: `NodePort` — port `30006`
-- 4Gi persistent volume
-- Set credentials on first login
-
-**Access:**
-
-```bash
-# Open http://localhost:30006 and set your admin credentials
-```
-
----
-
-### 13. Install Portainer (Kubernetes UI)
-
-```bash
-cd apps/portainer
-./install.sh
-```
-
-- Namespace: `portainer`
-- Chart: `portainer/portainer` (Community Edition)
-- HTTP NodePort: `30777`
-- HTTPS NodePort: `30779`
-- 10Gi persistent volume
-
-### 13. Install Kubeseal (Sealed Secrets)
-
-```bash
-cd apps/kubeseal
-./install.sh
-```
-
-- Namespace: `kube-system`
-- Chart: `sealed-secrets/sealed-secrets` from `bitnami-labs.github.io`
-- Installs the controller; use the `kubeseal` CLI to encrypt secrets
-
-### 14. Install Kong Gateway (API Gateway)
-
-```bash
-cd apps/kong
-./install.sh
-```
-
-- Namespace: `kong`
-- Chart: `kong/kong` from `charts.konghq.com`
-- Mode: DB-less (no database required)
-- Admin API NodePort: `30007` → `http://localhost:30007`
-- HTTP Proxy NodePort: `30008` → `http://localhost:30008`
-- HTTPS Proxy NodePort: `30009` → `https://localhost:30009`
-- Kubernetes Ingress Controller enabled (uses `ingressClassName: kong`)
-
-**Verify:**
-
-```bash
-kubectl get pods -n kong
-```
-
----
-
-### 15. Install GitLab *(optional)*
-
-```bash
-cd apps/gitlab
-./install.sh
-```
-
-- Namespace: `gitlab`
-- Requires a real domain and external IP before use
-- Edit `install.sh` to set `global.hosts.domain`, `global.hosts.externalIP`, and `certmanager-issuer.email`
-
-## Ingress Rules (`ingress.yaml`)
-
-The `ingress.yaml` under the `static/` directory defines rules for:
-
-- `jenkins.tpinf.xyz` → `jenkins:8080`
-- `argocd.local` → `argocd-server:80`
-- `harbor.local` → `my-harbor-portal:80`
-- `defectdojo.local` → `defectdojo-django:80`
-- `api.tpinf.xyz` → `kong-kong-proxy:80`
-- `litellm.tpinf.xyz` → `litellm:4000`
-
-Apply with:
+| File | Purpose |
+|------|---------|
+| `ingress.yaml` | Hosts for Jenkins, Argo CD, Harbor, DefectDojo, Kong and LiteLLM |
+| `kong-ingress.yaml` | Kong-class ingresses |
+| `jenkins-argocd-rbac.yaml` | RBAC letting Jenkins work with Argo CD |
+| `remoteadmintoken.yaml` | Remote admin token resource |
 
 ```bash
 kubectl apply -f static/ingress.yaml
 ```
 
-## Credentials and Secrets Management
+For `*.local` hosts, add entries to `/etc/hosts` that point at your cluster ingress IP.
 
-### Security Best Practices
+## Jenkins pipelines
 
-**Never commit real credentials to Git.** Instead:
+Pipelines are under `apps/jenkins/`:
 
-1. **Environment Variables** (for local development)
-   ```bash
-   export HARBOR_PASSWORD="your-password"
-   ```
+- `demo/Jenkinsfile`: secure CI flow for a sample Node.js app.
+- `zap/Jenkinsfile`: OWASP ZAP scan.
+- `lib/`: shared pipeline code.
 
-2. **Kubernetes Secrets** (for cluster workloads)
-   ```bash
-   kubectl create secret generic harbor-credentials \
-     --from-literal=username=admin \
-     --from-literal=password=yourpassword \
-     -n jenkins
-   ```
+The demo pipeline:
 
-3. **Sealed Secrets** (encrypted in Git, safe to commit)
-   ```bash
-   echo -n 'your-secret' | kubectl create secret generic my-secret --dry-run=client --from-file=/dev/stdin -o yaml | kubeseal > sealed-secret.yaml
-   ```
+1. Clones the demo application.
+2. Installs dependencies and runs tests if a `test` script exists.
+3. Runs SonarQube analysis.
+4. Builds a Docker image.
+5. Scans the image with Trivy.
+6. Optionally pushes the image to Harbor (`PUSH_TO_HARBOR`).
+7. Optionally imports the Trivy report into DefectDojo (`IMPORT_TO_DEFECTDOJO`).
 
-4. **Vault** (enterprise-grade secrets management)
-   ```bash
-   vault kv put secret/myapp password="yourpassword"
-   ```
+It runs in a Kubernetes agent pod with `nodejs`, `docker-cli`, `trivy` and `curl` containers.
 
-### Initial Setup: Jenkins Credentials
+Create these credentials in Jenkins (Manage Jenkins → Credentials):
 
-After Jenkins is installed, add these credentials in the Jenkins UI (Manage Jenkins → Credentials):
-
-| Credential ID | Type | Value | Usage |
-|---|---|---|---|
-| `harbor-credentials` | Username/Password | Harbor admin user | Push images to Harbor |
-| `defectdojo-api-token` | Secret text | DefectDojo API token | Import vulnerability reports |
-| `sonar` | Secret text | SonarQube token | Run code analysis |
-
-**How to get DefectDojo API Token:**
-
-```bash
-# Port-forward to DefectDojo
-kubectl port-forward -n defectdojo svc/defectdojo-django 8000:8000 &
-# Visit http://localhost:8000 and login
-# Go to User Profile → API Key → Generate new key
-```
-
-## Jenkins Pipeline Overview
-
-The demo pipeline definition is in `jenkins/demo/Jenkinsfile`.
-
-### Pipeline runtime
-
-Jenkins uses a Kubernetes agent pod with multiple containers:
-
-- `nodejs` for dependency installation and tests
-- `docker-cli` for image build and push
-- `trivy` for vulnerability scanning
-- `curl` for DefectDojo API import
-
-### Pipeline parameters
-
-- `PUSH_TO_HARBOR`
-- `IMPORT_TO_DEFECTDOJO`
-
-### Demo application source
-
-```
-https://github.com/docker/getting-started-todo-app.git
-```
-
-### Image naming
-
-```
-<harbor-host>:<harbor-port>/my-project/getting-started-todo-app:<build-number>
-```
-
-### Jenkins credentials required
-
-| Credential ID | Type | Usage |
-|---------------|------|-------|
-| `harbor-credentials` | Username/Password | Push images to Harbor |
-| `defectdojo-api-token` | Secret text | Import Trivy reports |
+| ID | Type | Used for |
+|----|------|----------|
+| `harbor-credentials` | Username/Password | Pushing images to Harbor |
+| `defectdojo-api-token` | Secret text | Importing Trivy reports |
 | `sonar` | Secret text | SonarQube analysis |
+
+See [`apps/jenkins/README.MD`](apps/jenkins/README.MD) for more.
+
+## VM environments
+
+- [`vm/`](vm/README.md): a three-node RKE2 cluster on VMware Fusion with Vagrant, plus [Rancher Manager](vm/rancher-manager.md). Use it as a cluster for this lab.
+- `gitlab/web` and `gitlab/runner`: Vagrant setups for a self-hosted GitLab server and a runner.
+
+For the GitLab runner, set these environment variables before `vagrant up`:
+
+| Variable | Purpose |
+|----------|---------|
+| `GITLAB_URL` | URL of your GitLab instance (empty by default) |
+| `GITLAB_RUNNER_TOKEN` | Runner registration token |
+| `RUNNER_DNS_SERVERS` | Comma-separated DNS servers for the VM |
+
+## Secrets
+
+Never commit real credentials. This repo's `.gitignore` excludes `.env*` and `secret*.yaml`.
+
+- **Local use:** environment variables.
+- **Cluster workloads:** Kubernetes Secrets. See `apps/mcpserver/secret.yaml.example` for the pattern.
+- **Safe to commit:** Sealed Secrets, which are encrypted for your cluster.
+
+  ```bash
+  kubectl create secret generic my-secret --from-literal=key=value --dry-run=client -o yaml \
+    | kubeseal --format yaml > sealed-secret.yaml
+  ```
+
+- **Central store:** Vault. After installing, run `vault operator init` to get the unseal keys and root token, and store them somewhere safe.
 
 ## Troubleshooting
 
-### Common Issues and Solutions
+| Problem | What to try |
+|---------|-------------|
+| Pod stuck in `Pending` | `kubectl describe pod <pod> -n <ns>`. Usually low resources, an unbound PVC, or image pull errors. |
+| Helm install fails | `helm repo update`, then `helm list -n <ns>` to look for a conflicting release. |
+| Port already in use | `lsof -i :<port>`, or change the NodePort in the install script or values file. |
+| Service won't start | `kubectl logs -n <ns> <pod>` and `kubectl get events -n <ns>`. |
+| Argo CD app out of sync | Check the Application in the Argo CD UI, or run `kubectl describe application <name> -n argocd`. |
+| Need a shell in a pod | `kubectl exec -it <pod> -n <ns> -- sh` |
 
-#### "kubectl: command not found"
+## Cleanup
 
-**Solution:** kubectl is not installed or not in PATH. See [Prerequisites](#prerequisites) for installation instructions.
-
-#### Cluster won't start with k3d
-
-```bash
-# Check if Docker is running
-docker ps
-
-# If error, start Docker and try again
-./k3d/start.sh
-
-# Check cluster status
-k3d cluster list
-```
-
-#### Pod stuck in "Pending" state
+Remove one service:
 
 ```bash
-# Check pod status and events
-kubectl describe pod POD_NAME -n NAMESPACE
-
-# Common causes:
-# - Insufficient resources (CPU/memory)
-# - PersistentVolume not available
-# - Image pull errors
+helm uninstall <release> -n <namespace>
+kubectl delete namespace <namespace>
 ```
 
-#### Helm install fails
+Remove Argo CD and the apps it manages:
 
 ```bash
-# Update Helm repositories
-helm repo update
-
-# Check for conflicting releases
-helm list -n NAMESPACE
-
-# If stuck, uninstall and retry
-helm uninstall RELEASE_NAME -n NAMESPACE
+kubectl delete -f argocd/app-of-apps.yaml
+helm uninstall argo-rollouts -n argo-rollouts
+helm uninstall argocd -n argocd
 ```
 
-#### Port already in use (e.g., port 30003)
-
-```bash
-# Check what's using the port
-lsof -i :30003
-
-# Either:
-# 1. Kill the process: kill -9 PID
-# 2. Or use a different port by editing install.sh
-```
-
-#### Jenkins won't start after install
-
-```bash
-# Check logs
-kubectl logs -n jenkins -l app=jenkins --tail=50
-
-# Verify PVC is bound
-kubectl get pvc -n jenkins
-
-# Restart pod if stuck
-kubectl rollout restart deployment jenkins -n jenkins
-```
-
-#### How to debug any pod
-
-```bash
-# Get logs
-kubectl logs -n NAMESPACE POD_NAME
-
-# Get detailed info
-kubectl describe pod POD_NAME -n NAMESPACE
-
-# Get shell access
-kubectl exec -it POD_NAME -n NAMESPACE -- /bin/bash
-
-# Check events
-kubectl get events -n NAMESPACE
-```
-
-#### Need to restart everything?
-
-```bash
-# Delete and recreate cluster
-k3d cluster delete my-cluster
-./k3d/start.sh
-```
-
----
-
-## Cleanup and Uninstall
-
-### Remove Individual Components
-
-```bash
-# Uninstall a specific service
-helm uninstall RELEASE_NAME -n NAMESPACE
-
-# Example: Remove Jenkins
-helm uninstall jenkins -n jenkins
-kubectl delete namespace jenkins
-```
-
-### Remove All Installed Services
-
-```bash
-# From repository root
-helm uninstall jenkins -n jenkins 2>/dev/null
-helm uninstall sonarqube -n sonarqube 2>/dev/null
-helm uninstall my-harbor -n harbor 2>/dev/null
-helm uninstall defectdojo -n defectdojo 2>/dev/null
-helm uninstall argocd -n argocd 2>/dev/null
-helm uninstall istio -n istio-system 2>/dev/null
-helm uninstall kube-prometheus-stack -n grafana 2>/dev/null
-helm uninstall grafana-alloy -n grafana-alloy 2>/dev/null
-helm uninstall vault -n vault 2>/dev/null
-helm uninstall uptime-kuma -n monitoring 2>/dev/null
-helm uninstall portainer -n portainer 2>/dev/null
-helm uninstall sealed-secrets -n kube-system 2>/dev/null
-helm uninstall kong -n kong 2>/dev/null
-
-# Clean up namespaces
-kubectl delete namespace jenkins sonarqube harbor defectdojo argocd istio-system grafana grafana-alloy vault monitoring portainer kong
-```
-
-### Completely Delete the Cluster
-
-```bash
-# WARNING: This deletes everything, including persistent data!
-k3d cluster delete my-cluster
-```
-
-### Verification After Cleanup
-
-```bash
-# Verify cluster is clean
-kubectl get namespaces
-kubectl get all --all-namespaces
-```
-
----
-
-## Compatibility Notes
-
-### Rancher Desktop Support
-
-✅ **This project is fully compatible with Rancher Desktop.**
-
-Rancher Desktop users can:
-1. Skip Docker Desktop installation entirely
-2. Use Rancher Desktop's built-in container runtime
-3. Still use k3d to create Kubernetes clusters (recommended for consistency)
-4. Or use Rancher Desktop's built-in Kubernetes directly
-
-**Setup with Rancher Desktop:**
-
-```bash
-# Option 1: Use k3d with Rancher Desktop (recommended)
-# Rancher Desktop provides the container runtime for k3d
-./k3d/start.sh
-
-# Option 2: Use Rancher Desktop's built-in Kubernetes directly
-# Enable Kubernetes in Rancher Desktop settings, then:
-kubectl config use-context rancher-desktop
-```
-
----
-
-## Notes and Limitations
-
-- This repository is intentionally scoped as a local lab and portfolio demo, not a production-hardened platform.
-- Any sensitive values used during local testing should be injected at deploy/runtime (Kubernetes Secrets, Vault, or CI secret stores), not committed to source control.
-- The SonarQube install script uses inline `--set` flags instead of `values-sonar.yaml`.
-- The Jenkins pipeline mounts the host Docker socket — convenient for a lab, not for hardened production.
-- Jenkins artifacts currently use mixed paths/file names (`values.yaml` vs `jenkins-values.yaml`, `jenkins/Jenkinsfile` vs `jenkins/demo/Jenkinsfile`). Align these before running seed jobs.
-- GitLab requires significant resources and external DNS; it is included as a reference install script only.
-- Vault installs to namespace `vault` and still requires `vault operator init` after deploy; save unseal keys securely.
-
-## Recommended Startup Order
-
-```bash
-./k3d/start.sh
-
-# Install applications and controllers from the repository root
-./apps/kubeseal/install.sh
-./apps/harbor/install.sh
-./apps/sonarqube/install.sh
-./apps/defectdojo/install.sh
-./apps/jenkins/install.sh
-./argocd/install.sh
-./apps/grafana/install.sh
-./apps/vault/install.sh
-./apps/uptime-kuma/install.sh
-./apps/postgres/install.sh
-./apps/litellm/install.sh
-./apps/portainer/install.sh
-./apps/kong/install.sh
-
-# Apply shared ingress configuration
-kubectl apply -f static/ingress.yaml
-```
-
-## Summary
-
-This repository is a local DevSecOps playground for testing a secure CI workflow on Kubernetes. It combines Jenkins, SonarQube, Trivy, Harbor, DefectDojo, Argo CD, Grafana, Vault, Uptime Kuma, Portainer, Kubeseal, and Kong Gateway into a single environment suitable for demos, learning, and experimentation.
-
-## Get Token After Applying Secret
-
-For remote access to your Kubernetes cluster (e.g., from Portainer or external tools):
-
-```bash
-kubectl create serviceaccount remote-admin -n kube-system
-
-kubectl create clusterrolebinding remote-admin-binding --clusterrole=cluster-admin --serviceaccount=kube-system:remote-admin
-
-kubectl get secret remote-admin-token -n kube-system -o jsonpath='{.data.token}' | base64 --decode
-echo ""  # Add newline for readability
-```
-
-This creates a service account with cluster-admin permissions and outputs the access token. **Save this token securely** — it grants full cluster access.
+Deleting the ApplicationSet also deletes the Applications and their resources, because they carry a cleanup finalizer.

@@ -17,6 +17,7 @@ spec:
         directories:
           - path: apps/custom_microservice
           - path: apps/vault
+          - path: apps/bifrost
   template:
     metadata:
       name: '{{ .path.basename | replace "_" "-" }}'
@@ -49,6 +50,18 @@ spec:
             releaseName: vault
             valueFiles:
               - $values/apps/vault/vault-values.yaml
+        - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
+          targetRevision: main
+          ref: values
+    {{- else if eq .path.basename "bifrost" }}
+      sources:
+        - repoURL: https://maximhq.github.io/bifrost/helm-charts
+          chart: bifrost
+          targetRevision: "*"
+          helm:
+            releaseName: bifrost
+            valueFiles:
+              - $values/apps/bifrost/bifrost-values.yaml
         - repoURL: https://github.com/tanut-pen/dev-sec-ops.git
           targetRevision: main
           ref: values
